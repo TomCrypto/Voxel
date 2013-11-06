@@ -11,3 +11,13 @@
 *.lai
 *.la
 *.a
+
+*.suo
+
+*.opensdf
+*.sdf
+
+Debug/
+Release/
+
+*.bmp
