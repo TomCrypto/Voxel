@@ -1,13 +1,29 @@
-#include "stdafx.h"
+#include <cstdlib>
+
+#ifdef TESTING
+
+#include "testing.h"
+
+int main(int argc, char* argv[])
+{
+    Testing::RunTests();
+    return EXIT_SUCCESS;
+}
+
+#else
+
+// main program goes here
+
+#include "rtmath.h"
 
 #include "renderer.h"
 
 #include <Windows.h>
 #include <fstream>
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char* argv[])
 {
-	Renderer renderer(1024, 768);
+    Renderer renderer(1024, 768);
 
 	const Pixel* render = renderer.Render();
 
@@ -48,6 +64,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	file.close();
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
+#endif

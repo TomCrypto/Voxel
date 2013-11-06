@@ -19,5 +19,12 @@
 
 Debug/
 Release/
+Testing/
 
 *.bmp
+
+*.ipch
+
+*.user
+*.tlog
+*.obj
