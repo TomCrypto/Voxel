@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 struct Pixel
 {
 	float r, g, b, a;
