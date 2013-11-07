@@ -1,6 +1,6 @@
 #include <cstdlib>
 
-#include "testing/testing.hpp"
+#include "testing.hpp"
 
 int main(int argc, char* argv[])
 {
