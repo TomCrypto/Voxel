@@ -9,37 +9,34 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Header Files\Displays">
-      <UniqueIdentifier>{e0299b0a-0c21-4b8b-b696-f3ac09c3adea}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Math">
+    <Filter Include="Header Files\math">
       <UniqueIdentifier>{25d32c7f-0e29-4355-819c-ba7c7006649d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Math">
+    <Filter Include="Source Files\math">
       <UniqueIdentifier>{eec47934-77af-4aab-95b0-f3f56e48e83e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Tests">
-      <UniqueIdentifier>{8caad7a5-9854-4a58-b714-d3f1f9894b2b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Tests">
+    <Filter Include="Source Files\testing">
       <UniqueIdentifier>{d0cdd2e4-17d8-4949-a913-8342e4086e90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\testing">
+      <UniqueIdentifier>{8caad7a5-9854-4a58-b714-d3f1f9894b2b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="display.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="testing.h">
-      <Filter>Header Files\Tests</Filter>
+    <ClInclude Include="math\vector3.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="testing\testing.h">
+      <Filter>Header Files\testing</Filter>
+    </ClInclude>
+    <ClInclude Include="testing\modules\vector3.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -49,8 +46,8 @@
     <ClCompile Include="renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="testing.cpp">
-      <Filter>Source Files\Tests</Filter>
+    <ClCompile Include="testing\testing.cpp">
+      <Filter>Source Files\testing</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

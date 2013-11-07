@@ -17,9 +17,7 @@
 *.opensdf
 *.sdf
 
-Debug/
-Release/
-Testing/
+bin/
 
 *.bmp
 

@@ -45,8 +45,7 @@ void Testing::RunTests()
 ******************* Add #includes for your unit tests here. *******************
 ******************************************************************************/
 
-//#include "float4.h"
-//#include "float4x4.h"
+#include "testing/modules/vector3.h"
 
 /******************************************************************************
 ******************* Add references to your unit tests here. *******************
@@ -56,9 +55,7 @@ std::map<std::string, UNIT_TEST> AcquireAllTests()
 {
     std::map<std::string, UNIT_TEST> tests;
 
-    //tests["float4_access"]                       = Testing::float4_access;
-    //tests["float4_add"]                          = Testing::float4_add;
-    //tests["float4_sub"]                          = Testing::float4_sub;
+    tests["vector3_add"]                          = Testing::vector3_add;
 
     return tests;
 }

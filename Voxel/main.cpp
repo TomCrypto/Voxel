@@ -2,7 +2,7 @@
 
 #ifdef TESTING
 
-#include "testing.h"
+#include "testing/testing.h"
 
 int main(int argc, char* argv[])
 {
