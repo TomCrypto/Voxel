@@ -1,11 +1,13 @@
 # Set up source and destination directories
 
-TARGET  = voxel
+TARGET  = test
 BIN_DIR = bin/
 OBJ_DIR = obj/
 CPP_DIR = src/
 HPP_DIR = include/
-TEST_DIR = test/
+
+TGT_OBJ_DIR = ../obj/
+TGT_HPP_DIR = ../include/
 
 # Define the default compiler settings
 
@@ -18,6 +20,9 @@ HPP = $(shell find $(HPP_DIR) -name '*.hpp')
 CPP = $(shell find $(CPP_DIR) -name '*.cpp')
 OBJ = $(subst .cpp,.o,$(subst $(CPP_DIR),$(OBJ_DIR),$(CPP)))
 
+TGT_HPP = $(shell find $(TGT_HPP_DIR) -name '*.hpp')
+TGT_OBJ = $(shell find $(TGT_OBJ_DIR) -type f \( -name '*.o' ! -name 'main.o' \))
+
 # Compile the target program
 
 default: $(BIN)
@@ -27,19 +32,14 @@ run: $(BIN)
 
 $(BIN): $(OBJ)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(LDFLAGS) $(OBJ) -o $(BIN)
+	$(CXX) $(LDFLAGS) $(OBJ) $(TGT_OBJ) -o $(BIN)
 
-$(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP)
+$(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP) $(TGT_HPP)
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -c $< -o $@
-
-.PHONY: test
-test:
-	cd $(TEST_DIR); $(MAKE) && $(MAKE) run
+	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I$(TGT_HPP_DIR) -c $< -o $@
 
 .PHONY: clean
 clean:
-	cd $(TEST_DIR); $(MAKE) clean
 	rm -rf $(BIN_DIR)
 	rm -rf $(OBJ_DIR)
 
