@@ -55,7 +55,7 @@ std::map<std::string, UNIT_TEST> AcquireAllTests()
 {
     std::map<std::string, UNIT_TEST> tests;
 
-    tests["vector3_add"]                          = Testing::vector3_add;
+    tests["vector3_dot"]                          = Testing::vector3_dot;
 
     return tests;
 }
