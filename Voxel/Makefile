@@ -23,6 +23,11 @@ ifeq ($(CXX), clang)
     CXXFLAGS += -no-integrated-as
 endif
 
+# Disables any development features.
+ifeq ($(lean), 1)
+	CXXFLAGS += -D LEAN
+endif
+
 CFLAGS += $(extra)
 
 HEADERS = $(shell find $(INCLUDE)/ -name '*.hpp')
