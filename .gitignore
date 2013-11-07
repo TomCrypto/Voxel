@@ -18,6 +18,8 @@
 *.sdf
 
 bin/
+obj/
+*~
 
 *.bmp
 

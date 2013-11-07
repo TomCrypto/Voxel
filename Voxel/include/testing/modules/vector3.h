@@ -1,6 +1,6 @@
 #pragma once
 
-//#include "math/vector3.h" // compile error for me
+#include "math/vector3.h" // compile error for me
 
 namespace Testing
 {
