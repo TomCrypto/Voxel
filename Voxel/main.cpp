@@ -14,8 +14,6 @@ int main(int argc, char* argv[])
 
 // main program goes here
 
-#include "rtmath.h"
-
 #include "renderer.h"
 
 #include <Windows.h>
