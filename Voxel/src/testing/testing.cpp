@@ -1,4 +1,4 @@
-#include "testing/testing.h"
+#include "testing/testing.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -45,7 +45,7 @@ void Testing::RunTests()
 ******************* Add #includes for your unit tests here. *******************
 ******************************************************************************/
 
-#include "testing/modules/vector3.h"
+#include "testing/modules/vector3.hpp"
 
 /******************************************************************************
 ******************* Add references to your unit tests here. *******************

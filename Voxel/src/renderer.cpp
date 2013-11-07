@@ -1,4 +1,4 @@
-#include "renderer.h"
+#include "renderer.hpp"
 
 Renderer::Renderer(size_t width, size_t height) : width(width), height(height)
 {

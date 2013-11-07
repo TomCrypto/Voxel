@@ -1,12 +1,14 @@
-BINDIR = bin
-OBJDIR = obj
-SRCDIR = src
+BIN_DIR = bin
+OBJ_DIR = obj
+SRC_DIR = src
 INCLUDE = include
+BINARY  = voxel
 
-TARGET = voxel
-
+# Default compiler
 CXX ?= g++
-CXXFLAGS = -Wall -Wextra -Wno-unused-parameter -std=c++11
+
+# Base compiler flags
+CXXFLAGS = -Wall -Wextra -std=c++11
 
 # Chooses the proper compiler flags to use based on debug
 # or release. By default release, use `make debug=1 ...`.
@@ -21,46 +23,36 @@ ifeq ($(CXX), clang)
     CXXFLAGS += -no-integrated-as
 endif
 
-ifeq ($(testing), 1)
-	CXXFLAGS += -D TESTING
-endif
-
 CFLAGS += $(extra)
 
-HEADERS = $(shell find $(INCLUDE)/ -name '*.h')
-SRC = $(shell find $(SRCDIR)/ -name '*.cpp')
-ASM = $(shell find $(SRCDIR)/ -name '*.S')
-SRCOBJ = $(subst .cpp,.cpp.o,$(subst $(SRCDIR)/,$(OBJDIR)/,$(SRC)))
-ASMOBJ = $(subst .S,.S.o,$(subst $(SRCDIR)/,$(OBJDIR)/,$(ASM)))
-BINPATH = $(addprefix $(BINDIR)/, $(TARGET))
+HEADERS = $(shell find $(INCLUDE)/ -name '*.hpp')
+SRC = $(shell find $(SRC_DIR)/ -name '*.cpp')
+ASM = $(shell find $(SRC_DIR)/ -name '*.S')
+SRCOBJ = $(subst .cpp,.cpp.o,$(subst $(SRC_DIR)/,$(OBJ_DIR)/,$(SRC)))
+ASMOBJ = $(subst .S,.S.o,$(subst $(SRC_DIR)/,$(OBJ_DIR)/,$(ASM)))
+BINPATH = $(addprefix $(BIN_DIR)/, $(BINARY))
 
-default: $(OBJDIR) $(BINDIR) $(BINPATH)
+default: $(OBJ_DIR) $(BIN_DIR) $(BINPATH)
 
-$(OBJDIR):
+$(OBJ_DIR):
 	@mkdir $@
 
-$(BINDIR):
+$(BIN_DIR):
 	@mkdir $@
 
 $(BINPATH): $(SRCOBJ) $(ASMOBJ)
 	$(CXX) $(LDFLAGS) $(SRCOBJ) $(ASMOBJ) -o $(BINPATH)
 
-$(OBJDIR)/%.cpp.o: $(SRCDIR)/%.cpp $(HEADERS)
+$(OBJ_DIR)/%.cpp.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c $< -o $@
 
-$(OBJDIR)/%.S.o: $(SRCDIR)/%.S $(HEADERS)
+$(OBJ_DIR)/%.S.o: $(SRC_DIR)/%.S $(HEADERS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c $< -o $@
-
-.PHONY: clean_bin
-clean_bin:
-	rm -rf $(BINDIR)
-
-.PHONY: cleanobj
-clean_obj:
-	rm -rf $(OBJDIR)
 
 .PHONY: clean
-clean: clean_bin clean_obj
-	
+clean:
+	rm -rf $(BIN_DIR)
+	rm -rf $(OBJ_DIR)
+
