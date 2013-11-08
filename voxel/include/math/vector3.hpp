@@ -9,9 +9,11 @@ struct basic_vector3
 {
 	typedef Ty scalar;
 
-	basic_vector3() {}
-	basic_vector3(const basic_vector3 &copy) : x(copy.x), y(copy.y), z(copy.z) {}
-	basic_vector3(scalar x, scalar y, scalar z) : x(x), y(y), z(z) {}
+	basic_vector3() : x(els[0]), y(els[1]), z(els[2]) {}
+	basic_vector3(const basic_vector3 &copy)
+		: x(els[0]), y(els[1]), z(els[2]), els{copy.x, copy.y, copy.z} {}
+	basic_vector3(scalar x, scalar y, scalar z)
+		: x(els[0]), y(els[1]), z(els[2]), els{x, y, z} {}
 
 	friend basic_vector3 operator +(const basic_vector3 &a, const basic_vector3 &b)
 		{ return basic_vector3(a.x+b.x, a.y+b.y, a.z+b.z); }
@@ -37,7 +39,10 @@ struct basic_vector3
 	static const basic_vector3 zero()
 		{ return basic_vector3(0, 0, 0); }
 
-	scalar x, y, z;
+	scalar &x, &y, &z;
+
+private:
+	scalar els[3];
 };
 
 template <typename Ty>
