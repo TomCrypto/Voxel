@@ -23,6 +23,9 @@ obj/
 *.swp*
 
 *.bmp
+*.ppm
+*.hdr
+*.pic
 
 *.ipch
 

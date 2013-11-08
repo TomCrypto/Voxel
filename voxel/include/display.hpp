@@ -1,40 +1,30 @@
 #pragma once
 
-#include <vector>
-#include <cassert>
+#include "renderer.hpp"
 
-namespace Voxel
+/** @class DisplayDevice
+  * 
+  * The DisplayDevice class is an interface for using arbitrary display devices
+  * which lets the renderer's output be presented to any type of media, such as
+  * an interactive graphical user interface or a multimedia file format.
+**/ 
+class DisplayDevice
 {
-	struct Pixel
-	{
-		float r, g, b, a;
-	};
-
-	// A screen raster, which holds a pixel buffer
-	struct Raster
-	{
-		private:
-			std::vector<Pixel> m_data;
-			size_t width, height;
-
-		public:
-			Raster(size_t width, size_t height) : width(width), height(height)
-			{
-				assert((width > 0) && (height > 0));
-				m_data.reserve(width * height);
-			}
-			
-			const Pixel& operator()(const size_t x, const size_t y)
-			{
-				assert((x < width) && (y < height));
-				return m_data[y * width + x];
-			}
-	};
-
-	class Display
-	{
-		public:
-			virtual ~Display() { }
-			virtual void Present(Raster raster);
-	};
+    public:
+        /** Presents a renderer on some display device.
+          *
+          * @param renderer The renderer to present.
+          *
+          * @return \c false if an error occurred, \c true otherwise.
+          *
+          * @remarks Devices should discard any and all state associated with a
+          *          renderer once this function returns, and should be able to
+          *          handle this function being called multiple times.
+        **/
+        virtual bool present(const Renderer &renderer) = 0;
+        
+        virtual ~DisplayDevice()
+        {
+            /* ... */
+        }
 };

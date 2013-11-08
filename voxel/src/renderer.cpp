@@ -1,28 +1,45 @@
-#if 0
-
 #include "renderer.hpp"
 
-Renderer::Renderer(size_t width, size_t height) : width(width), height(height)
+#include <cmath>
+
+Renderer::Renderer(size_t width, size_t height/*,
+                 const Projection& projection,
+                 const Integrator& integrator*/)
+/*    : projection(projection),
+      integrator(integrator)*/
 {
-	pixels = new Pixel[width * height];
+    raster = new Raster(width, height);
 }
 
 Renderer::~Renderer()
 {
-	delete[] pixels;
+    delete raster;
 }
 
-const Pixel* Renderer::Render()
+const Raster& Renderer::render() const
 {
-	for (size_t y = 0; y < height; ++y)
-		for (size_t x = 0; x < width; ++x)
-		{
-			pixels[y * width + x].r = 0.75f;
-			pixels[y * width + x].g = 0.25f;
-			pixels[y * width + x].b = 0.25f;
-		}
+    // this is where the rendering happens:
+    // 1. project a camera ray for every pixel
+    // (according to some subpixel sampling distribution)
+    // 2. integrate the camera ray to assign a color
+    // 3. post-process as needed
+    // 4. output the rest
 
-	return pixels;
+    // this is just a test render
+    
+    for (size_t y = 0; y < raster->height; ++y)
+        for (size_t x = 0; x < raster->width; ++x)
+        {
+            float px = ((float)x / raster->width - 0.5f) * 2;
+            float py = ((float)y / raster->height - 0.5f) * 2;
+            
+            float dist = 1 - sqrt(px * px + py * py);
+            if (dist < 0) dist = 0;
+        
+            (*raster)(x, y).r = dist * (sin(1 * (px + py)) * 0.5f + 0.5f);
+            (*raster)(x, y).g = dist * (sin(2 * (px + py)) * 0.5f + 0.5f);
+            (*raster)(x, y).b = dist * (sin(3 * (px + py)) * 0.5f + 0.5f);
+        }
+    
+    return *raster;
 }
-
-#endif
