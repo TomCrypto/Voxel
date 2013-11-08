@@ -1,5 +1,3 @@
-// 11/6/2013
-
 #ifndef VOXEL_MATH_VECTOR3_H
 #define VOXEL_MATH_VECTOR3_H
 
@@ -36,6 +34,9 @@ struct basic_vector3
 	scalar &operator [](size_t i) { return (&x)[i]; }
 	scalar operator [](size_t i) const { return (&x)[i]; }
 
+	static const basic_vector3 zero()
+		{ return basic_vector3(0, 0, 0); }
+
 	scalar x, y, z;
 };
 
@@ -49,6 +50,6 @@ basic_vector3<Ty> cross(const basic_vector3<Ty> &a, const basic_vector3<Ty> &b)
 
 typedef basic_vector3<float> vector3f;
 
-};
+}; // math
 
 #endif // VOXEL_MATH_VECTOR_H
