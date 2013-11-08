@@ -1,20 +1,18 @@
 #include <cstdlib>
 
-struct Pixel
-{
-	float r, g, b, a;
-};
+/* Indicative interface for the Renderer */
 
 class Renderer
 {
 	private:
-		Pixel* pixels;
+	    // some state, and at least a memory buffer to hold the render
 
 	public:
-		Renderer(size_t width, size_t height);
-		~Renderer();
+        // DisplayInfo contains stuff like render width, height, etc..
+		Renderer(DisplayInfo info,
+                 Projection projection,
+                 Integrator integrator);
 
-		size_t width, height;
-
-		const Pixel* Render();
+        // Renders the frame, and returns a raster of pixels (TBD)
+		const DisplayRaster render();
 };

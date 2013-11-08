@@ -1,3 +1,5 @@
+#if 0
+
 #include "renderer.hpp"
 
 Renderer::Renderer(size_t width, size_t height) : width(width), height(height)
@@ -22,3 +24,5 @@ const Pixel* Renderer::Render()
 
 	return pixels;
 }
+
+#endif
