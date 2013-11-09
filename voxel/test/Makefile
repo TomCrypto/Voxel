@@ -12,6 +12,7 @@ TGT_HPP_DIR = ../include/
 # Define the default compiler settings
 
 CXXFLAGS = -O3 -Wall -Wextra -std=c++11
+LDFLAGS = -lgtest -pthread
 
 # Locate relevant source files, headers, and destination .obj's
 
@@ -32,7 +33,7 @@ run: $(BIN)
 
 $(BIN): $(OBJ)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(LDFLAGS) $(OBJ) $(TGT_OBJ) -o $(BIN)
+	$(CXX) $(OBJ) $(TGT_OBJ) -o $(BIN) $(LDFLAGS)
 
 $(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP) $(TGT_HPP)
 	@mkdir -p $(@D)

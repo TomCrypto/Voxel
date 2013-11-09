@@ -1,9 +1,9 @@
-#include <cstdlib>
+#include <gtest/gtest.h>
 
-#include "testing.hpp"
+#include "tests.hpp"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    Testing::RunTests();
-    return EXIT_SUCCESS;
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
