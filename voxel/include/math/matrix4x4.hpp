@@ -62,6 +62,8 @@ private:
 	scalar els[16];
 };
 
+typedef basic_matrix4x4<float> float4x4;
+
 }; // math
 
 #endif // VOXEL_MATH_MATRIX4X4_H

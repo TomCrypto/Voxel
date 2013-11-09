@@ -53,7 +53,7 @@ template <typename Ty>
 basic_vector3<Ty> cross(const basic_vector3<Ty> &a, const basic_vector3<Ty> &b)
 	{ return basic_vector3<Ty>(a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x); }
 
-typedef basic_vector3<float> vector3f;
+typedef basic_vector3<float> float3;
 
 }; // math
 
