@@ -60,7 +60,7 @@ precompile:
 .PHONY: test
 test: $(OBJ) $(HPP)
 	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I$(DEP_DIR) $(TEST_OBJ) $(TEST_CPP) -o $(TMP) $(LDFLAGS) $(TEST_LDFLAGS)
-	-$(TMP)
+	-$(TMP) $(ARGS)
 	rm $(TMP)
 
 .PHONY: doc
