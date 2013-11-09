@@ -12,7 +12,7 @@ DOC_DIR = doc/
 
 # Define the default compiler settings
 
-CXX ?= clang++
+CXX = clang++
 CXXFLAGS = -O2 -Wall -Wextra -std=c++11
 
 LDFLAGS = 
@@ -48,7 +48,7 @@ $(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP)
 
 # Assign defaults to configs
 
-integrator ?= FlatIntegrator
+integrator ?= FlatIntegrator<Sphere>
 
 # The precompile pass checks to see if any changes should be made to the compile_settings
 # file. If this file must be changed, a recompile is induced.
@@ -57,7 +57,7 @@ check_setting = $(shell if test "$(shell sed -n '$(2)P' include/compile_settings
 
 .PHONY: precompile
 precompile:
-	$(call check_setting,$(integrator),7,"Integrator")
+	$(call check_setting,$(integrator),3,"Integrator")
 
 # Compile and run the unit tests on the fly
 

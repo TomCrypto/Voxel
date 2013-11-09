@@ -3,18 +3,16 @@
 #include <cstdlib>
 
 #include <vector>
-#include <cassert>
+#include <stdexcept>
 
-#include "geometry/sphere_test.hpp"
-
-#include "compile_settings.hpp"
+#include "math/vector3.hpp"
 
 //#include "projection.hpp"
 //#include "integrator.hpp"
 
 // this needs to be improved to be able to have different precisions
 // and perhaps different color systems (if applicable)
-struct Pixel
+struct color
 {
 	float r, g, b, a;
 };
@@ -22,94 +20,66 @@ struct Pixel
 // A screen raster, which holds a pixel buffer
 struct Raster
 {
-	private:
-		std::vector<Pixel> m_data;
+	Raster(size_t width, size_t height)
+	  : m_width(width), m_height(height)
+	{
+		if (width <= 0 && height <= 0)
+			throw std::runtime_error("Invalid Raster size.");
+		m_data.resize(m_width * m_height);
+	}
 
-	public:
-		Raster(size_t width, size_t height) : width(width), height(height)
-		{
-			assert((width > 0) && (height > 0));
-			m_data.reserve(width * height);
-		}
-		
-		const Pixel& operator()(size_t x, size_t y) const
-		{
-			assert((x < width) && (y < height));
-			return m_data[y * width + x];
-		}
-		
-		Pixel& operator()(size_t x, size_t y)
-		{
-			assert((x < width) && (y < height));
-			return m_data[y * width + x];
-		}
-		
-		const size_t width, height;
+	const color *operator[](size_t y) const
+		{ return &m_data[y * m_width]; }
+	color *operator[](size_t y)
+		{ return &m_data[y * m_width]; }
+
+	size_t width() const { return m_width; }
+	size_t height() const { return m_height; }
+
+private:
+	std::vector<color> m_data;
+	const size_t m_width, m_height;
 };
 
 /* Indicative interface for the Renderer */
 
-template <typename Integrator>
-class Renderer
+template <typename Intr, typename Geom>
+struct Renderer
 {
-	private:
-	    Raster *raster;
-	    
-	    SphereTest *geometry;
-	    Integrator *integrator;
-	
-	    /*const Projection& projection;
-	    const Integrator& integrator;*/
-
-	public:
-		Renderer(size_t width, size_t height/*,
-                 const Projection& projection,
-                 const Integrator& integrator*/)
+	Renderer(const Intr &integrator)
+	  : integrator(geometry)
         {
-            raster = new Raster(width, height);
-            
-            geometry = new SphereTest();
-            
-            integrator = new FlatIntegrator(geometry);
-        }
-                 
-        ~Renderer()
-        {
-            delete integrator;
-
-            delete geometry;
-
-            delete raster;
         }
 
         // Renders the frame, and returns a raster of pixels (TBD)
-		const Raster& render() const
+	void render(Raster &raster) const
         {
-            // this is where the rendering happens:
-            // 1. project a camera ray for every pixel
-            // (according to some subpixel sampling distribution)
-            // 2. integrate the camera ray to assign a color
-            // 3. post-process as needed
-            // 4. output the rest
+		// this is where the rendering happens:
+		// 1. project a camera ray for every pixel
+		// (according to some subpixel sampling distribution)
+		// 2. integrate the camera ray to assign a color
+		// 3. post-process as needed
+		// 4. output the rest
 
-            // this is just a test render
-            
-            for (size_t y = 0; y < raster->height; ++y)
-                for (size_t x = 0; x < raster->width; ++x)
-                {
-                    float px = ((float)x / raster->width - 0.5f) * 2;
-                    float py = ((float)y / raster->height - 0.5f) * 2;
-                    
-                    float3 camDir = normalize(float3(px, py, 0.5f));
-                    float3 camPos(0, 0, 0);
-                    
-                    float3 color = integrator->integrate(camPos, camDir);
-                    
-                    (*raster)(x, y).r = color.x;
-                    (*raster)(x, y).g = color.y;
-                    (*raster)(x, y).b = color.z;
-                }
-            
-            return *raster;
+		// this is just a test render
+		for (size_t y = 0; y < raster.height(); ++y) {
+			for (size_t x = 0; x < raster.width(); ++x) {
+			    float px = ((float)x / raster.width() - 0.5f) * 2;
+			    float py = ((float)y / raster.height() - 0.5f) * 2;
+			    
+			    math::float3 cam_dir = normalize(math::float3(px, py, 0.5f));
+			    math::float3 cam_pos(0, 0, 0);
+			    
+			    math::float3 color = integrator.integrate(cam_pos, cam_dir);
+			    
+			    raster[y][x].r = color.x;
+			    raster[y][x].g = color.y;
+			    raster[y][x].b = color.z;
+			}
+		}
         }
+
+private:
+	Geom geometry;
+	Intr integrator;
 };
