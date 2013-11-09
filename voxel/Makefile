@@ -48,12 +48,12 @@ $(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP)
 
 # Assign defaults to configs
 
-integrator ?= FlatIntegrator<Sphere>
+integrator ?= FlatIntegrator
 
 # The precompile pass checks to see if any changes should be made to the compile_settings
 # file. If this file must be changed, a recompile is induced.
 
-check_setting = $(shell if test "$(shell sed -n '$(2)P' include/compile_settings.hpp)" != "typedef $(1) $(3);"; then (sed -i "$(2)s/.*/typedef $(1) $(3)\;/" include/compile_settings.hpp); fi)
+check_setting = $(shell if test "$(shell sed -n '$(2)P' include/compile_settings.hpp)" != "\#define $(3) $(1);"; then (sed -i "$(2)s/.*/\#define $(3) $(1)/" include/compile_settings.hpp); fi)
 
 .PHONY: precompile
 precompile:

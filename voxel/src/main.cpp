@@ -31,7 +31,7 @@ void draw(const Raster &raster)
 int main(int argc, char *argv[])
 {
 	Sphere world;
-	Renderer<Integrator,Sphere> renderer(world);
+	Renderer<Integrator<Sphere>,Sphere> renderer(world);
 
 	Raster raster(768, 768);
 	renderer.render(raster);
