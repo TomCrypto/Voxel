@@ -1,5 +1,12 @@
 #pragma once
 
+/** @file display.hpp
+  * @brief Display Device Interface
+  *
+  * Lets the program use different display devices under a unified interface in
+  * order to present the renderer's output to the user in some fashion.
+**/
+
 #include "renderer.hpp"
 
 #include <vector>

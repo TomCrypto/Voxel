@@ -8,6 +8,7 @@ HPP_DIR = include/
 TEST_DIR = test/
 TMP_DIR = /tmp/
 DEP_DIR = ../
+DOC_DIR = doc/
 
 # Define the default compiler settings
 
@@ -62,8 +63,15 @@ test: $(OBJ) $(HPP)
 	-$(TMP)
 	rm $(TMP)
 
+.PHONY: doc
+doc:
+	doxygen
+	mkdir -p $(DOC_DIR)
+	cd $(DOC_DIR); ln -s -f html/index.html $(TARGET).html
+
 .PHONY: clean
 clean:
 	rm -rf $(BIN_DIR)
 	rm -rf $(OBJ_DIR)
+	rm -rf $(DOC_DIR)
 
