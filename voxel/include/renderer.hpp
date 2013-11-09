@@ -22,9 +22,8 @@ struct color
 struct Raster
 {
 	Raster(size_t width, size_t height)
-	  : m_width(width), m_height(height)
+	  : m_width(width), m_height(height), m_data(width * height)
 	{
-		m_data.resize(m_width * m_height);
 	}
 
 	const color *operator[](size_t y) const
@@ -36,8 +35,8 @@ struct Raster
 	size_t height() const { return m_height; }
 
 private:
-	std::vector<color> m_data;
 	const size_t m_width, m_height;
+	std::vector<color> m_data;
 };
 
 template <typename RasterTy, typename IntegratorTy>
