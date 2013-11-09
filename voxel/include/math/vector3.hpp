@@ -46,6 +46,12 @@ private:
 };
 
 template <typename Ty>
+bool operator ==(const basic_vector3<Ty> &a, const basic_vector3<Ty> &b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
+
+template <typename Ty>
+bool operator !=(const basic_vector3<Ty> &a, const basic_vector3<Ty> &b) { return a.x != b.x || a.y != b.y || a.z != b.z; }
+
+template <typename Ty>
 Ty dot(const basic_vector3<Ty> &a, const basic_vector3<Ty> &b)
 	{ return a.x*b.x + a.y*b.y + a.z*b.z; }
 
