@@ -40,7 +40,7 @@ $(BIN): precompile $(OBJ)
 
 $(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP)
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I../../ -c $< -o $@
 
 # Assign defaults to configs
 
@@ -57,7 +57,7 @@ precompile:
 
 .PHONY: test
 test: $(OBJ) $(HPP)
-	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) $(TEST_OBJ) $(TEST_CPP) -o $(TMP) $(LDFLAGS) $(TEST_LDFLAGS)
+	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I../../ $(TEST_OBJ) $(TEST_CPP) -o $(TMP) $(LDFLAGS) $(TEST_LDFLAGS)
 	-$(TMP)
 	rm $(TMP)
 
