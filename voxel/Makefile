@@ -6,18 +6,26 @@ OBJ_DIR = obj/
 CPP_DIR = src/
 HPP_DIR = include/
 TEST_DIR = test/
+TMP_DIR = /tmp/
 
 # Define the default compiler settings
 
 CXX ?= clang++
 CXXFLAGS = -O3 -Wall -Wextra -std=c++11
 
+LDFLAGS = 
+TEST_LDFLAGS = -lgtest -pthread
+
 # Locate relevant source files, headers, and destination .obj's
 
+TMP = $(addprefix $(TMP_DIR),$(TARGET))
 BIN = $(addprefix $(BIN_DIR),$(TARGET))
 HPP = $(shell find $(HPP_DIR) -name '*.hpp')
 CPP = $(shell find $(CPP_DIR) -name '*.cpp')
 OBJ = $(subst .cpp,.o,$(subst $(CPP_DIR),$(OBJ_DIR),$(CPP)))
+
+TEST_OBJ = $(shell find $(OBJ_DIR) -type f \( -name '*.o' ! -name 'main.o' \))
+TEST_CPP = $(shell find $(TEST_DIR) -name '*.cpp')
 
 # Compile the target program
 
@@ -28,7 +36,7 @@ run: $(BIN)
 
 $(BIN): precompile $(OBJ)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(LDFLAGS) $(OBJ) -o $(BIN)
+	$(CXX) $(OBJ) -o $(BIN) $(LDFLAGS)
 
 $(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP)
 	@mkdir -p $(@D)
@@ -46,13 +54,15 @@ check_setting = $(shell if test "$(shell sed -n '$(2)P' include/compile_settings
 .PHONY: precompile
 precompile:
 	$(call check_setting,$(renderer),3,"Renderer")
+
 .PHONY: test
-test:
-	cd $(TEST_DIR); $(MAKE) && $(MAKE) run
+test: $(OBJ) $(HPP)
+	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) $(TEST_OBJ) $(TEST_CPP) -o $(TMP) $(LDFLAGS) $(TEST_LDFLAGS)
+	-$(TMP)
+	rm $(TMP)
 
 .PHONY: clean
 clean:
-	cd $(TEST_DIR); $(MAKE) clean
 	rm -rf $(BIN_DIR)
 	rm -rf $(OBJ_DIR)
 

@@ -2,11 +2,12 @@
 
 #include "math/vector3.hpp"
 
-#define GROUP vector3
+/******************************************************************************
+****************************** UNIT TESTS FOLLOW ******************************
+******************************************************************************/
+#define MODULE                                                          vector3
 
-/* UNIT TESTS FOLLOW */
-
-TEST(GROUP, eq)
+TEST(MODULE, eq)
 {
     math::basic_vector3<float> u(1.38584f * 1e-35f,
                                  3.58681f * 1e-28f,
@@ -17,7 +18,7 @@ TEST(GROUP, eq)
     ASSERT_EQ(u, v);
 }
 
-TEST(GROUP, add)
+TEST(MODULE, add)
 {
     math::basic_vector3<float> u(1, 2, 3);
     math::basic_vector3<float> v(4, 5, 6);
@@ -26,7 +27,7 @@ TEST(GROUP, add)
     ASSERT_EQ(w, u + v);
 }
 
-TEST(GROUP, sub)
+TEST(MODULE, sub)
 {
     math::basic_vector3<float> u(1, 2, 3);
     math::basic_vector3<float> v(4, 5, 6);
@@ -35,7 +36,7 @@ TEST(GROUP, sub)
     ASSERT_EQ(w, u - v);
 }
 
-TEST(GROUP, dot)
+TEST(MODULE, dot)
 {
     math::basic_vector3<float> u(1, 2, 3);
     math::basic_vector3<float> v(4, 5, 6);
