@@ -9,7 +9,7 @@ TEST_DIR = test/
 
 # Define the default compiler settings
 
-CXX = clang++
+CXX ?= clang++
 CXXFLAGS = -O3 -Wall -Wextra -std=c++11
 
 # Locate relevant source files, headers, and destination .obj's
@@ -36,11 +36,11 @@ $(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP)
 
 # Assign defaults to configs
 
-RENDERER = RendererGI
+renderer ?= RendererGI
 
 .PHONY: precompile
 precompile:
-	@if test $(shell echo -n "\""; cat include/compile_settings.hpp | grep -i "Renderer"; echo -n "\"") != $(shell printf "\"typedef $(RENDERER) Renderer; \""); then (sed -i '3s/.*/typedef $(RENDERER) Renderer;/' include/compile_settings.hpp); fi
+	if test "$(shell sed -n '3P' include/compile_settings.hpp)" != "typedef $(renderer) Renderer;"; then (sed -i "3s/.*/typedef $(renderer) Renderer\;/" include/compile_settings.hpp); fi
 .PHONY: test
 test:
 	cd $(TEST_DIR); $(MAKE) && $(MAKE) run
