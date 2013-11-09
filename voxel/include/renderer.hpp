@@ -23,8 +23,6 @@ struct Raster
 	Raster(size_t width, size_t height)
 	  : m_width(width), m_height(height)
 	{
-		if (width <= 0 && height <= 0)
-			throw std::runtime_error("Invalid Raster size.");
 		m_data.resize(m_width * m_height);
 	}
 
