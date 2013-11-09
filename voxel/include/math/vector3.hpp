@@ -1,6 +1,9 @@
 #ifndef VOXEL_MATH_VECTOR3_H
 #define VOXEL_MATH_VECTOR3_H
 
+#include <cstdlib>
+#include <cmath>
+
 namespace math
 {
 
@@ -14,6 +17,19 @@ struct basic_vector3
 		: x(els[0]), y(els[1]), z(els[2]), els{copy.x, copy.y, copy.z} {}
 	basic_vector3(scalar x, scalar y, scalar z)
 		: x(els[0]), y(els[1]), z(els[2]), els{x, y, z} {}
+		
+    basic_vector3 &operator= (const basic_vector3 &copy)
+    {
+        x = copy.x;
+        y = copy.y;
+        z = copy.z;
+        
+        els[0] = x;
+        els[1] = y;
+        els[2] = z;
+        
+        return *this;
+    }
 
 	friend basic_vector3 operator +(const basic_vector3 &a, const basic_vector3 &b)
 		{ return basic_vector3(a.x+b.x, a.y+b.y, a.z+b.z); }
@@ -21,7 +37,11 @@ struct basic_vector3
 		{ return basic_vector3(a.x-b.x, a.y-b.y, a.z-b.z); }
 	friend basic_vector3 operator *(const basic_vector3 &a, scalar b)
 		{ return basic_vector3(a.x*b, a.y*b, a.z*b); }
+	friend basic_vector3 operator *(scalar b, const basic_vector3 &a)
+		{ return basic_vector3(a.x*b, a.y*b, a.z*b); }
 	friend basic_vector3 operator /(const basic_vector3 &a, scalar b)
+		{ return basic_vector3(a.x/b, a.y/b, a.z/b); }
+	friend basic_vector3 operator /(scalar b, const basic_vector3 &a)
 		{ return basic_vector3(a.x/b, a.y/b, a.z/b); }
 
 	basic_vector3 &operator +=(const basic_vector3 &b)
@@ -35,6 +55,11 @@ struct basic_vector3
 
 	scalar &operator [](size_t i) { return (&x)[i]; }
 	scalar operator [](size_t i) const { return (&x)[i]; }
+	
+	scalar length() const
+	{
+	    return sqrt(x*x + y*y + z*z);
+	}
 
 	static const basic_vector3 zero()
 		{ return basic_vector3(0, 0, 0); }
@@ -61,6 +86,12 @@ template <typename Ty>
 bool operator !=(const basic_vector3<Ty> &a, const basic_vector3<Ty> &b)
 {
     return !equals<Ty>(a.x, b.x) || !equals<Ty>(a.y, b.y) || !equals<Ty>(a.z, b.z);
+}
+
+template <typename Ty>
+basic_vector3<Ty> normalize(const basic_vector3<Ty> &a)
+{
+    return a / a.length();
 }
 
 template <typename Ty>

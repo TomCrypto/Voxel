@@ -93,7 +93,7 @@ TEST(MODULE, scalar_multiplication)
         float3 v(1 * s, 2 * s, 3 * s);
         
         ASSERT_FLOAT3_EQ(u * s, v);
-        //ASSERT_FLOAT3_EQ(s * u, v);
+        ASSERT_FLOAT3_EQ(s * u, v);
     }
 }
 
@@ -109,7 +109,7 @@ TEST(MODULE, scalar_division)
         float3 v(1 / s, 2 / s, 3 / s);
         
         ASSERT_FLOAT3_EQ(u / s, v);
-        //ASSERT_FLOAT3_EQ(s / u, v);
+        ASSERT_FLOAT3_EQ(s / u, v);
     }
 }
 

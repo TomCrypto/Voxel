@@ -7,6 +7,8 @@
   * order to present the renderer's output to the user in some fashion.
 **/
 
+#include "compile_settings.hpp"
+
 #include "renderer.hpp"
 
 #include <vector>
@@ -33,4 +35,4 @@ bool has_display(const std::vector<std::string> &description);
   * @remarks This function fails if \c has_display(description) is \c false.
 **/
 bool start_display(const std::vector<std::string> &description,
-                   const Renderer &renderer);
+                   const Renderer<Integrator> &renderer);

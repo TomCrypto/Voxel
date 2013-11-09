@@ -5,6 +5,8 @@
 #include "renderer.hpp"
 #include "display.hpp"
 
+#include "compile_settings.hpp"
+
 static bool is_command(const std::string &str)
 {
     return (str.compare(0, 2, "--") == 0);
@@ -50,7 +52,7 @@ int main(int argc, char *argv[])
     //World world(world params here);
 
     //Renderer renderer(initial renderer parameters, world); // world is read-only
-    Renderer renderer(1024, 768); // TEMPORARY
+    Renderer<Integrator> renderer(1024, 768); // TEMPORARY
     
     bool retval = start_display(device, renderer);
     return (retval ? EXIT_SUCCESS : EXIT_FAILURE);

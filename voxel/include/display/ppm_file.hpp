@@ -6,10 +6,12 @@
 
 #include "renderer.hpp"
 
+#include "compile_settings.hpp"
+
 /* Display device which prints the output to a PPM image. */
 
 bool run_ppm(const std::vector<std::string> &description,
-             const Renderer &renderer)
+             const Renderer<Integrator> &renderer)
 {
     if (description.size() < 2) return false;
 

@@ -1,7 +1,9 @@
 #include "display.hpp"
 
+#include "compile_settings.hpp"
+
 typedef bool (*DISPLAY_DEVICE)(const std::vector<std::string> &description,
-                               const Renderer &renderer/*, World &world */);
+                               const Renderer<Integrator> &renderer);
 
 static DISPLAY_DEVICE get_display(const std::vector<std::string> &description);
 
@@ -11,7 +13,7 @@ bool has_display(const std::vector<std::string> &description)
 }
 
 bool start_display(const std::vector<std::string> &description,
-                   const Renderer &renderer)
+                   const Renderer<Integrator> &renderer)
 {
     auto device = get_display(description);
     if (device == nullptr) return false;
