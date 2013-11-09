@@ -7,6 +7,7 @@ CPP_DIR = src/
 HPP_DIR = include/
 TEST_DIR = test/
 TMP_DIR = /tmp/
+DEP_DIR = ../
 
 # Define the default compiler settings
 
@@ -40,7 +41,7 @@ $(BIN): precompile $(OBJ)
 
 $(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP)
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I.. -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I$(DEP_DIR) -c $< -o $@
 
 # Assign defaults to configs
 
@@ -57,7 +58,7 @@ precompile:
 
 .PHONY: test
 test: $(OBJ) $(HPP)
-	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I.. $(TEST_OBJ) $(TEST_CPP) -o $(TMP) $(LDFLAGS) $(TEST_LDFLAGS)
+	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I$(DEP_DIR) $(TEST_OBJ) $(TEST_CPP) -o $(TMP) $(LDFLAGS) $(TEST_LDFLAGS)
 	-$(TMP)
 	rm $(TMP)
 
