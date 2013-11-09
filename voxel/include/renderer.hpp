@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <stdexcept>
+#include <functional>
 
 #include "math/vector3.hpp"
 
@@ -39,45 +40,30 @@ private:
 	const size_t m_width, m_height;
 };
 
-/* Indicative interface for the Renderer */
-
-template <typename Intr, typename Geom>
-struct Renderer
+template <typename RasterTy, typename IntegratorTy>
+void render(RasterTy &raster, IntegratorTy &&integrator)
 {
-	Renderer(const Intr &integrator)
-	  : integrator(geometry)
-        {
-        }
+	// this is where the rendering happens:
+	// 1. project a camera ray for every pixel
+	// (according to some subpixel sampling distribution)
+	// 2. integrate the camera ray to assign a color
+	// 3. post-process as needed
+	// 4. output the rest
 
-        // Renders the frame, and returns a raster of pixels (TBD)
-	void render(Raster &raster) const
-        {
-		// this is where the rendering happens:
-		// 1. project a camera ray for every pixel
-		// (according to some subpixel sampling distribution)
-		// 2. integrate the camera ray to assign a color
-		// 3. post-process as needed
-		// 4. output the rest
-
-		// this is just a test render
-		for (size_t y = 0; y < raster.height(); ++y) {
-			for (size_t x = 0; x < raster.width(); ++x) {
-			    float px = ((float)x / raster.width() - 0.5f) * 2;
-			    float py = ((float)y / raster.height() - 0.5f) * 2;
-			    
-			    math::float3 cam_dir = normalize(math::float3(px, py, 0.5f));
-			    math::float3 cam_pos(0, 0, 0);
-			    
-			    math::float3 color = integrator.integrate(cam_pos, cam_dir);
-			    
-			    raster[y][x].r = color.x;
-			    raster[y][x].g = color.y;
-			    raster[y][x].b = color.z;
-			}
+	// this is just a test render
+	for (size_t y = 0; y < raster.height(); ++y) {
+		for (size_t x = 0; x < raster.width(); ++x) {
+		    float px = ((float)x / raster.width() - 0.5f) * 2;
+		    float py = ((float)y / raster.height() - 0.5f) * 2;
+		    
+		    math::float3 cam_dir = normalize(math::float3(px, py, 0.5f));
+		    math::float3 cam_pos(0, 0, 0);
+		    
+		    math::float3 color = integrator(cam_pos, cam_dir);
+		    
+		    raster[y][x].r = color.x;
+		    raster[y][x].g = color.y;
+		    raster[y][x].b = color.z;
 		}
-        }
-
-private:
-	Geom geometry;
-	Intr integrator;
-};
+	}
+}

@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+#include <functional>
 
 #include "renderer.hpp"
 //#include "display.hpp"
@@ -30,11 +31,12 @@ void draw(const Raster &raster)
 
 int main(int argc, char *argv[])
 {
-	Sphere world;
-	Renderer<Integrator<Sphere>,Sphere> renderer(world);
+	using namespace std::placeholders;
 
 	Raster raster(768, 768);
-	renderer.render(raster);
+	Sphere world;
+
+	render(raster, std::bind(integrate_flat<Sphere>, world, _1, _2));
 	draw(raster);
 
 
