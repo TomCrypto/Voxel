@@ -2,6 +2,8 @@
 
 #include <cstdlib>
 
+#include <omp.h>
+
 #include <vector>
 #include <stdexcept>
 #include <functional>
@@ -44,8 +46,11 @@ void render(Raster &raster, IntegratorTy &&integrator,
 	// 4. output the rest
 
 	// this is just a test render
-	for (size_t y = 0; y < raster.height(); ++y) {
-		for (size_t x = 0; x < raster.width(); ++x) {
+	#pragma omp parallel for schedule(dynamic, 1)
+	for (size_t y = 0; y < raster.height(); ++y)
+	{
+		for (size_t x = 0; x < raster.width(); ++x)
+		{
 		    float px = ((float)x / raster.width() - 0.5f) * 2;
 		    float py = ((float)y / raster.height() - 0.5f) * 2;
 		    

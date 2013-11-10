@@ -13,9 +13,9 @@ DOC_DIR = doc/
 # Define the default compiler settings
 
 CXX ?= clang++
-CXXFLAGS = -O2 -Wall -Wextra -std=c++11
+CXXFLAGS = -O2 -Wall -Wextra -std=c++11 -fopenmp
 
-LDFLAGS = 
+LDFLAGS = -lgomp
 TEST_LDFLAGS = -lgtest -pthread
 
 # Locate relevant source files, headers, and destination .obj's
