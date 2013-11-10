@@ -12,7 +12,7 @@ DOC_DIR = doc/
 
 # Define the default compiler settings
 
-CXX = clang++
+CXX ?= clang++
 CXXFLAGS = -O2 -Wall -Wextra -std=c++11
 
 LDFLAGS = 
@@ -57,7 +57,7 @@ check_setting = $(shell if test "$(shell sed -n '$(2)P' include/compile_settings
 
 .PHONY: precompile
 precompile:
-	$(call check_setting,$(integrator),3,"Integrator")
+	#$(call check_setting,$(integrator),3,"Integrator")
 
 # Compile and run the unit tests on the fly
 

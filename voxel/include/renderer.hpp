@@ -11,13 +11,6 @@
 //#include "projection.hpp"
 //#include "integrator.hpp"
 
-// this needs to be improved to be able to have different precisions
-// and perhaps different color systems (if applicable)
-struct color
-{
-	float r, g, b, a;
-};
-
 // A screen raster, which holds a pixel buffer
 struct Raster
 {
@@ -26,9 +19,9 @@ struct Raster
 	{
 	}
 
-	const color *operator[](size_t y) const
+	const math::float3 *operator[](size_t y) const
 		{ return &m_data[y * m_width]; }
-	color *operator[](size_t y)
+	math::float3 *operator[](size_t y)
 		{ return &m_data[y * m_width]; }
 
 	size_t width() const { return m_width; }
@@ -36,11 +29,12 @@ struct Raster
 
 private:
 	const size_t m_width, m_height;
-	std::vector<color> m_data;
+	std::vector<math::float3> m_data;
 };
 
-template <typename RasterTy, typename IntegratorTy>
-void render(RasterTy &raster, IntegratorTy &&integrator)
+template <typename IntegratorTy, typename ProjectionTy>
+void render(Raster &raster, IntegratorTy &&integrator,
+            ProjectionTy &&projection)
 {
 	// this is where the rendering happens:
 	// 1. project a camera ray for every pixel
@@ -55,14 +49,13 @@ void render(RasterTy &raster, IntegratorTy &&integrator)
 		    float px = ((float)x / raster.width() - 0.5f) * 2;
 		    float py = ((float)y / raster.height() - 0.5f) * 2;
 		    
-		    math::float3 cam_dir = normalize(math::float3(px, py, 0.5f));
-		    math::float3 cam_pos(0, 0, 0);
+		    // (px, py) in [-1..1] (clip space)
 		    
-		    math::float3 color = integrator(cam_pos, cam_dir);
+		    math::float3 origin, direction;
 		    
-		    raster[y][x].r = color.x;
-		    raster[y][x].g = color.y;
-		    raster[y][x].b = color.z;
+		    projection(px, py, &origin, &direction);
+
+		    raster[y][x] = integrator(origin, direction);
 		}
 	}
 }

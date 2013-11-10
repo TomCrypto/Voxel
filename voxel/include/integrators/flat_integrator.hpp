@@ -2,8 +2,10 @@
 
 #include "math/vector3.hpp"
 
-/* Default flat-color integrator, which returns white if and only if
- * the ray hits something (anything) and black otherwise. */
+#include <algorithm>
+
+/* Default flat-color integrator, which returns the object's color if
+ * and only if the ray hits something, and returns black otherwise. */
 
 template <typename GeometryTy>
 math::float3 integrate_flat(const GeometryTy &geometry,
@@ -13,8 +15,12 @@ math::float3 integrate_flat(const GeometryTy &geometry,
 	float distance;
 	Contact contact;
 
-	if (geometry.traverse(origin, direction, distance, contact))
-		return math::float3(1, 1, 1);
+	if (!geometry.traverse(origin, direction, distance, contact))
+	{
+	    return math::float3(0, 0, 0);
+	}
 	else
-		return math::float3(0, 0, 0);
+	{
+	    return contact.rgb;
+	}
 }
