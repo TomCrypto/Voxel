@@ -45,9 +45,9 @@ int main(int argc, char *argv[])
 	using namespace std::placeholders;
 
 	Raster raster(768, 768);
-	VoxelTest geometry;
+	CornellBox geometry;
 
-	render(std::bind(integrate_direct<VoxelTest>,
+	render(std::bind(integrate_direct<CornellBox>,
                      geometry, _1, _2),
            std::bind(project_perspective,
                      _1, _2, _3, _4, _5),

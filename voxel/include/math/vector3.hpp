@@ -30,6 +30,9 @@ struct basic_vector3
 		{ return basic_vector3(a.x/b, a.y/b, a.z/b); }
 	friend basic_vector3 operator /(scalar b, const basic_vector3 &a)
 		{ return basic_vector3(a.x/b, a.y/b, a.z/b); }
+		
+    friend basic_vector3 operator /(const basic_vector3 &a, const basic_vector3 &b)
+		{ return basic_vector3(a.x/b.x, a.y/b.y, a.z/b.z); }
 
 	basic_vector3 &operator =(const basic_vector3 &b)
 		{ x=b.x, y=b.y, z=b.z; return *this; }
