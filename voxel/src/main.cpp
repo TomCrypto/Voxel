@@ -45,13 +45,13 @@ int main(int argc, char *argv[])
 	using namespace std::placeholders;
 
 	Raster raster(768, 768);
-	CornellBox geometry;
+	VoxelTest geometry;
 
-	render(std::bind(integrate_direct<CornellBox>,
+	render(std::bind(integrate_depth<VoxelTest>,
                      geometry, _1, _2),
            std::bind(project_perspective,
                      _1, _2, _3, _4, _5),
-           std::bind(aa_offset,
+           std::bind(naive_offset,
                      _1, _2, _3),
            raster);
 

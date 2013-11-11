@@ -9,10 +9,17 @@
 
 #include <algorithm>
 
+////////
+
+typedef float distance;
+typedef math::float3 distance3;
+
+////////
+
 struct Voxel
 {
-    math::float3 normal;
-    math::float3 rgb;
+    math::float3 normal; // distance3?
+    math::float3 rgb; // that's a color
 };
 
 struct SVONode
@@ -20,19 +27,45 @@ struct SVONode
     void *children[8];
 };
 
+struct Intersection
+{
+    size_t index;
+    distance near, far;
+};
+
+static void swap(Intersection *a, Intersection *b)
+{
+    if (a->near > b->near)
+    {
+        Intersection tmp = *a;
+        *a = *b;
+        *b = tmp;
+    }
+}
+
+static void sort_network(Intersection *list)
+{
+    swap(&list[0], &list[2]);
+    swap(&list[1], &list[3]);
+    swap(&list[0], &list[1]);
+    swap(&list[2], &list[3]);
+    swap(&list[1], &list[2]);
+}
+
 static int voxel_count = 0;
 
-bool ray_aabb(math::float3 origin, math::float3 direction,
-              math::float3 bmin, math::float3 bmax,
-              float* near, float* far)
+bool ray_aabb(distance3 origin, distance3 direction,
+              distance3 bmin, distance3 bmax,
+              distance* near, distance* far)
 {
-    math::float3 bot = (bmin - origin) / (direction + math::float3(1e-6f, 1e-6f, 1e-6f)); // TODO: epsilons needed to avoid errors (find solution)
-    math::float3 top = (bmax - origin) / (direction + math::float3(1e-6f, 1e-6f, 1e-6f));
+    // TODO: epsilons needed to avoid errors (find solution)
+    distance3 bot = (bmin - origin) / (direction + math::float3(1e-6f, 1e-6f, 1e-6f));
+    distance3 top = (bmax - origin) / (direction + math::float3(1e-6f, 1e-6f, 1e-6f));
 
     //math::float3 tmin = std::min(top, bot);
     //math::float3 tmax = std::max(top, bot);
     
-    math::float3 tmin, tmax;
+    distance3 tmin, tmax;
     
     tmin.x = std::min(top.x, bot.x);
     tmin.y = std::min(top.y, bot.y);
@@ -51,15 +84,17 @@ bool ray_aabb(math::float3 origin, math::float3 direction,
 class VoxelTest
 {
 public:
-    math::float3 light() const
+    distance3 light() const
     {
         return math::float3(0.2f, -0.4f, 0.3f);
     }
     
-    bool traverse(const math::float3 &origin, const math::float3 &direction,
-		          float &distance, Contact &contact) const
+    bool traverse(const distance3 &origin, const distance3 &direction,
+		          distance &distance, Contact &contact) const
 	{
-	    return traverse(root, svo_depth, origin, direction, math::float3(-1, -1, -1), math::float3(1, 1, 1), distance, contact);
+	    return traverse(root, svo_depth, origin, direction,
+                        math::float3(-1, -1, -1), math::float3(1, 1, 1),
+                        distance, contact);
 	}
 	
 	VoxelTest()
@@ -73,10 +108,17 @@ public:
 	}
 	
 private:
-    const size_t svo_depth = 12;
+    const size_t svo_depth = 9; // TEMPORARY (will not be hardcoded later)
     
-    bool traverse(void *node, int depth, const math::float3 &origin, const math::float3 &direction,
-		          math::float3 min, math::float3 max, float &distance, Contact &contact) const
+    // this is the heart of the voxel renderer, the SVO traversal code
+    // this is where optimization efforts should be focused
+    // current optimizations and todo's:
+    // TODO: convert to iteration and use a stack
+    // TODO: implement and benchmark stackless traversal algorithms
+    // DONE: uses early rejection by sorting children
+    // TODO: fix remaining bugs
+    bool traverse(void *node, int depth, const distance3 &origin, const distance3 &direction,
+		          distance3 min, distance3 max, distance &dist, Contact &contact) const
 	{
 	    if (depth == 0)
 	    {
@@ -84,44 +126,82 @@ private:
 	        Voxel *voxel = (Voxel*)node;
 	        contact.rgb = voxel->rgb;
 	        contact.normal = voxel->normal;
-	        float tmp;
-	        return ray_aabb(origin, direction, min, max, &distance, &tmp);
+	        distance tmp;
+	        return ray_aabb(origin, direction, min, max, &dist, &tmp);
 	    }
 	    
 	    // otherwise, test intersection against each child
 	    
 	    SVONode *parent = (SVONode*)node;
 	    
-	    distance = std::numeric_limits<float>::infinity();
-	    
-	    for (int t = 0; t < 8; ++t)
-	    {
-	        if (parent->children[t] == nullptr) continue;
-	    
-	        math::float3 min_child, max_child;
-	        subdivide(min, max, t, min_child, max_child);
-	    
-	        float near, far;
-	        Contact contact2;
-	    
-	        if (ray_aabb(origin, direction, min_child, max_child, &near, &far))
-	        {
-	            float d;
-	            if (traverse(parent->children[t], depth - 1, origin, direction, min_child, max_child, d, contact2))
-	            {
-	                if ((d > 0) && (d < distance))
-	                {
-	                    contact = contact2;
-	                    distance = d;
-	                }
-	            }
-	        }
-	    }
-	    
-	    return ((distance > 0) && (distance < std::numeric_limits<float>::infinity()));
+	    dist = std::numeric_limits<distance>::infinity();
+        Intersection intersections[4]; // at most
+
+        for (size_t t = 0; t < 4; ++t)
+        {
+            intersections[t].near = std::numeric_limits<distance>::infinity();
+            intersections[t].far = std::numeric_limits<distance>::infinity();
+        }
+
+        size_t count = 0;
+
+        for (size_t t = 0; t < 8; ++t) // NOT RECURSIVE
+        {
+            if (parent->children[t] == nullptr) continue;
+
+            distance3 min_child, max_child;
+            subdivide(min, max, t, min_child, max_child);
+
+            distance near, far;
+
+            if (ray_aabb(origin, direction, min_child, max_child, &near, &far))
+            {
+                intersections[count].index = t;
+                intersections[count].near = near;
+                intersections[count].far = far;
+                ++count;
+            }
+        }
+
+        // this will sort the intersections by nearest, so we can bail as
+        // soon as we find an intersection
+        sort_network(intersections);
+
+        for (size_t t = 0; t < count; ++t)
+        {
+            size_t child_index = intersections[t].index;
+
+            distance3 min_child, max_child;
+            subdivide(min, max, child_index, min_child, max_child);
+
+            float d;
+            Contact tmp;
+
+            if (traverse(parent->children[child_index], depth - 1,
+                         origin, direction,
+                         min_child, max_child,
+                         d, tmp))
+            {
+                if (d < dist) // is this closer?
+                {
+                    dist = d;
+                    contact = tmp;
+                }
+
+                // is this intersection distance optimal?
+                // (no point searching further away children)
+                if ((t == count - 1) || (d < intersections[t + 1].near))
+                    return true;
+            }
+        }
+
+        //return false;
+        return (dist > 0) && (dist < std::numeric_limits<distance>::infinity());
 	}
 
-    void *build_SVO(int depth, math::float3 min_node, math::float3 max_node)
+    // this will be done in a separate program later on (SVO's will be
+    // loaded on the fly, no time to build them while streaming voxels)
+    void *build_SVO(int depth, distance3 min_node, distance3 max_node)
     {
         if (depth == 0)
         {
@@ -138,7 +218,7 @@ private:
         // build children here
         for (int t = 0; t < 8; ++t)
         {
-            math::float3 min_child, max_child;
+            distance3 min_child, max_child;
             subdivide(min_node, max_node, t, min_child, max_child);
             
             if (!contains_voxels(min_child, max_child)) node->children[t] = nullptr;
@@ -148,13 +228,16 @@ private:
         return node;
     }
     
-    void subdivide(math::float3 min_node, math::float3 max_node, int index,
-                   math::float3 &min_child, math::float3 &max_child) const
+    // this is also needed by the traversal code (no sense storing the
+    // bounding box of each voxel when it can be readily inferred from
+    // its location in the octree datastructure)
+    void subdivide(distance3 min_node, distance3 max_node, int index,
+                   distance3 &min_child, distance3 &max_child) const
     {
-        math::float3 extent = (max_node - min_node) / 2;
+        distance3 extent = (max_node - min_node) / 2;
         
-        math::float3 origin = (max_node + min_node) / 2;
-        math::float3 new_origin;
+        distance3 origin = (max_node + min_node) / 2;
+        distance3 new_origin;
     
         new_origin.x = origin.x + extent.x * (index&4 ? .5f : -.5f);
         new_origin.y = origin.y + extent.y * (index&2 ? .5f : -.5f);
@@ -164,38 +247,38 @@ private:
         max_child = new_origin + extent * .5f;
     }
     
-    float heightmap(float x, float z) const
+    float heightmap(distance x, distance z) const // TEMPORARY
     {
         //return 0.05f * (sin(x) + cos(z)) - 0.7f;
         
-        if ((x <= -0.525f) || (x >= 0.6f)) return std::numeric_limits<float>::infinity();
-        if ((z <= 0.2f)) return std::numeric_limits<float>::infinity();
+        if ((x <= -0.525f) || (x >= 0.6f)) return std::numeric_limits<distance>::infinity();
+        if ((z <= 0.2f)) return std::numeric_limits<distance>::infinity();
         
         
-        return -0.7f + 0.02f * (sin(15 * z) + sin(10 * x + 1));
+        return -0.7f + 0.03f * (sin(15 * z) + sin(10 * x + 1));
         
         //return -2.0f/3.0f;
     }
     
-    math::float3 normal(float x, float z) const
+    math::float3 normal(distance x, distance z) const // TEMPORARY
     {
-        float dx = 0.2 * cos(10 * x + 1);
-        float dz = 0.3 * cos(15 * z);
+        distance dx = 0.2 * cos(10 * x + 1);
+        distance dz = 0.3 * cos(15 * z);
     
-        return normalize(math::float3(dx, 1, dz));
+        return normalize(distance3(dx, 1, dz));
     }
     
-    bool contains_voxels(math::float3 min, math::float3 max) const
+    bool contains_voxels(distance3 min, distance3 max) const // TEMPORARY
     {
         int r = 10;
         
         for (int px = 0; px < r; ++px)
             for (int pz = 0; pz < r; ++pz)
             {
-                float x = min.x + (max.x - min.x) * (float)px / r;
-                float z = min.z + (max.z - min.z) * (float)pz / r;
+                distance x = min.x + (max.x - min.x) * (distance)px / r;
+                distance z = min.z + (max.z - min.z) * (distance)pz / r;
                 
-                float height = heightmap(x, z);
+                distance height = heightmap(x, z);
                 
                 if ((min.y <= height) && (height <= max.y)) return true;
             }
@@ -203,17 +286,18 @@ private:
         return false;
     }
     
-    void get_voxel_data(math::float3 min, math::float3 max, Voxel *voxel) const
+    void get_voxel_data(distance3 min, distance3 max, Voxel *voxel) const
+        // TEMPORARY
     {
         int r = 10;
         
         for (int px = 0; px < r; ++px)
             for (int pz = 0; pz < r; ++pz)
             {
-                float x = min.x + (max.x - min.x) * (float)px / r;
-                float z = min.z + (max.z - min.z) * (float)pz / r;
+                distance x = min.x + (max.x - min.x) * (distance)px / r;
+                distance z = min.z + (max.z - min.z) * (distance)pz / r;
                 
-                float height = heightmap(x, z);
+                distance height = heightmap(x, z);
                 
                 if ((min.y <= height) && (height <= max.y))
                 {
