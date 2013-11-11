@@ -2,6 +2,8 @@
 
 #include "math/vector3.hpp"
 
+#include "contact.hpp"
+
 #include <algorithm>
 
 /* Direct lighting integrator, which can handle one-bounce lighting

@@ -2,6 +2,8 @@
 
 #include "math/vector3.hpp"
 
+#include "contact.hpp"
+
 #include <algorithm>
 
 /* Depth integrator, which returns a grayscale color corresponding to

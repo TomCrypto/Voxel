@@ -6,12 +6,9 @@
 #include "math/vector3.hpp"
 #include <cmath>
 
-#include <algorithm>
+#include "contact.hpp"
 
-struct Contact
-{
-    math::float3 normal, rgb;
-};
+#include <algorithm>
 
 struct Plane
 {

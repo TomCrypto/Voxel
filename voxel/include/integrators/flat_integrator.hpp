@@ -2,6 +2,8 @@
 
 #include "math/vector3.hpp"
 
+#include "contact.hpp"
+
 #include <algorithm>
 
 /* Default flat-color integrator, which returns the object's color if
