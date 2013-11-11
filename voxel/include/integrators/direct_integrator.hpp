@@ -28,6 +28,9 @@ math::float3 integrate_direct(const GeometryTy &geometry,
 	    math::float3 dir_to_light = geometry.light() - hit;
 	    float distance_to_light = dir_to_light.length();
 	    dir_to_light = normalize(dir_to_light);
+	    
+	    #if 0
+	    
 	    float effective_distance;
 
 	    // this should really be replaced by a range occlusion test (improved performance and better semantics)
@@ -36,6 +39,9 @@ math::float3 integrate_direct(const GeometryTy &geometry,
 	        light_hit = true;
 	    }
 	    else light_hit = (effective_distance > distance_to_light); // can reach the light
+	    #endif
+	    
+	    light_hit = !geometry.occludes(hit, dir_to_light, distance_to_light);
 	    
 	    if (!light_hit) return ambient * contact.rgb;
 	    else
@@ -45,7 +51,6 @@ math::float3 integrate_direct(const GeometryTy &geometry,
 	        return (ambient + diffuse) * contact.rgb;
 	    }
 	    
-	
 		return contact.normal * 0.5f + math::float3(0.5f, 0.5f, 0.5f);
 		
     }

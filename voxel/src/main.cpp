@@ -40,6 +40,12 @@ void draw(const Raster &raster)
 	fclose(file);
 }
 
+#include <chrono>
+#include <iostream>
+
+typedef std::chrono::high_resolution_clock Clock;
+typedef std::chrono::milliseconds milliseconds;
+
 int main(int argc, char *argv[])
 {
 	using namespace std::placeholders;
@@ -47,6 +53,11 @@ int main(int argc, char *argv[])
 	Raster raster(768, 768);
 	VoxelTest geometry;
 
+    auto t1 = Clock::now();
+
+    size_t trials = 10;
+    
+    for (size_t t = 0; t < trials; ++t)
 	render(std::bind(integrate_depth<VoxelTest>,
                      geometry, _1, _2),
            std::bind(project_perspective,
@@ -54,6 +65,12 @@ int main(int argc, char *argv[])
            std::bind(aa_offset,
                      _1, _2, _3),
            raster);
+           
+    auto t2 = Clock::now();
+    
+    milliseconds ms = std::chrono::duration_cast<milliseconds>(t2 - t1);
+    
+    std::cout << "Time to render: " << ms.count() / trials << " ms." << std::endl;
 
 	draw(raster);
 
