@@ -36,14 +36,15 @@ public:
 	bool traverse(const math::float3 &origin, const math::float3 &direction,
 		          float &distance, Contact &contact) const
 	{
-	    distance = INFINITY;
 	    bool plane = true;
 	    int index = -1;
+
+		distance = std::numeric_limits<float>::infinity();
 	    
 	    for (size_t t = 0; t < planes.size(); ++t)
 	    {
 	        float d = ray_plane(origin, direction, planes[t]);
-	        if ((d > 0) && (d < distance))
+	        if (d > 0 && d < distance)
 	        {
 	            distance = d;
 	            plane = true;
@@ -54,7 +55,7 @@ public:
 	    for (size_t t = 0; t < spheres.size(); ++t)
 	    {
 	        float d = ray_sphere(origin, direction, spheres[t]);
-	        if ((d > 0) && (d < distance))
+	        if (d > 0 && d < distance)
 	        {
 	            distance = d;
 	            plane = false;
@@ -116,12 +117,13 @@ private:
 	    float b = dot(org, direction);
 	    float det = b * b - dot(org, org) + pow(sphere.radius, 2);
 
-	    if (det >= 0.0f) {
-		float l = sqrt(det);
-		float p = b - l, q = b + l;
-		if (p < 1e-5f) return q;
-		if (q < 1e-5f) return p;
-		return std::min(p, q);
+	    if (det >= 0.0f)
+		{
+			float l = sqrt(det);
+			float p = b - l, q = b + l;
+			if (p < 1e-5f) return q;
+			if (q < 1e-5f) return p;
+			return std::min(p, q);
 	    }
 	    return -1.0f;
 	}
