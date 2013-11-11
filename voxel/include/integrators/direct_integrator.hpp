@@ -19,9 +19,7 @@ math::float3 integrate_direct(const GeometryTy &geometry,
 	{
 	    // compute hit point (push back outside the object a little)
 	    math::float3 hit = origin + direction * distance + 1e-5f * contact.normal;
-	    
 	    float ambient = 0.10f;
-	    
 	    bool light_hit = false;
 	    
 	    // can we hit the light from here? if not, shadow
@@ -29,6 +27,7 @@ math::float3 integrate_direct(const GeometryTy &geometry,
 	    float distance_to_light = dir_to_light.length();
 	    dir_to_light = normalize(dir_to_light);
 	    float effective_distance;
+
 	    // this should really be replaced by a range occlusion test (improved performance and better semantics)
 	    if (!geometry.traverse(hit, dir_to_light, effective_distance, dummy))
 	    {
