@@ -101,7 +101,7 @@ public:
 	{
 	    printf("Building SVO (this is done only once).\n");
 	    printf("This will take a long time because my voxel containment test is extraordinarily bad. "
-	           "Go make yourself a coffee or something while it finds out which voxels\n"
+	           "Go make yourself a coffee or something while it finds out which voxels "
 	           "should be filled.\n");
 	    root = (SVONode*)build_SVO(svo_depth, math::float3(-1, -1, -1), math::float3(1, 1, 1));
 	    printf("SVO built (%d voxels).\n", voxel_count);
@@ -117,6 +117,34 @@ private:
     // TODO: implement and benchmark stackless traversal algorithms
     // DONE: uses early rejection by sorting children
     // TODO: fix remaining bugs
+
+    // CURRENT REASONS FOR BEING SLOW:
+    // 1. no SSE vector instructions
+    // 2. unnecessary ray_aabb call in leaf
+    // 3. recursion
+    // 4. "intersections" buffer not optimized
+    // 5. tree nodes allocated via malloc(), poor locality
+    // 6. ray_aabb is not optimized at all
+    // 7. possible algorithmic improvements?
+
+    // QUESTIONS TO RESOLVE:
+    // 1. do we need "far" in the "intersections" buffer?
+    // 2. are there any bugs? need a known voxel data set to test against
+    //    (do that once we have interactivity, to better locate glitches)
+
+    // ADDITIONAL INFO:
+    // - final tree will potentially be very deep, with up to 64 levels
+    //   (32 levels --> 64km^3 with 0.015 mm resolution)
+    // - procedural data generation can be done outside the tree, once
+    //   a voxel is intersected, by generating procedural data *inside*
+    //   the intersected voxel, depending on its material
+    //   (this is actually a REALLY GOOD idea as it completely gets rid
+    //    of any cubic artifacts and improves subpixel performance)
+    // - 64 levels --> 1800 AU^3 with 0.015 mm resolution
+    //   (that's 274 billion km^3, I trust this will be enough)
+    // - possibly use a hybrid approach, with two trees, one handling large
+    //   64km^3 "chunks", optimized for ultra fast traversal, and another
+    //   which focuses on culling chunks to improve performance
     bool traverse(void *node, int depth, const distance3 &origin, const distance3 &direction,
 		          distance3 min, distance3 max, distance &dist, Contact &contact) const
 	{
@@ -127,6 +155,8 @@ private:
 	        contact.rgb = voxel->rgb;
 	        contact.normal = voxel->normal;
 	        distance tmp;
+
+            // this is a waste - do it at the before-last depth
 	        return ray_aabb(origin, direction, min, max, &dist, &tmp);
 	    }
 	    
@@ -195,7 +225,6 @@ private:
             }
         }
 
-        //return false;
         return (dist > 0) && (dist < std::numeric_limits<distance>::infinity());
 	}
 
@@ -255,15 +284,18 @@ private:
         if ((z <= 0.2f)) return std::numeric_limits<distance>::infinity();
         
         
-        return -0.7f + 0.03f * (sin(15 * z) + sin(10 * x + 1));
+        //return -0.7f + 0.03f * (sin(15 * z) + sin(10 * x + 1));
         
-        //return -2.0f/3.0f;
+        return -2.0f/3.0f + 0.2f * x * x;
     }
     
     math::float3 normal(distance x, distance z) const // TEMPORARY
     {
-        distance dx = 0.2 * cos(10 * x + 1);
-        distance dz = 0.3 * cos(15 * z);
+        //distance dx = 0.2 * cos(10 * x + 1);
+        //distance dz = 0.3 * cos(15 * z);
+
+        distance dx = 0.4f * x;
+        distance dz = 0;
     
         return normalize(distance3(dx, 1, dz));
     }
@@ -302,7 +334,7 @@ private:
                 if ((min.y <= height) && (height <= max.y))
                 {
                     voxel->normal = normal(x, z);
-                    voxel->rgb = math::float3(1, 1, 1) * std::min(std::max(0.0f, std::abs(height)), 1.0f);
+                    voxel->rgb = distance3(1, 1, 1) * std::min(std::max(0.0f, std::abs(height)), 1.0f);
                 }
             }
     }

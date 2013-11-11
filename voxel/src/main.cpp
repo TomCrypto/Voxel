@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
                      geometry, _1, _2),
            std::bind(project_perspective,
                      _1, _2, _3, _4, _5),
-           std::bind(naive_offset,
+           std::bind(aa_offset,
                      _1, _2, _3),
            raster);
 
