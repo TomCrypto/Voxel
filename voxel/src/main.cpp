@@ -14,6 +14,10 @@
 #include "integrators/depth_integrator.hpp"
 
 #include "projections/test_perspective.hpp"
+#include "projections/fisheye.hpp"
+
+#include "subsampler/sample_naive.hpp"
+#include "subsampler/sample_aa.hpp"
 
 #include "compile_settings.hpp"
 
@@ -42,11 +46,13 @@ int main(int argc, char *argv[])
 	Raster raster(768, 768);
 	CornellBox geometry;
 
-	render(raster,
-	       std::bind(integrate_direct<CornellBox>,
-	                 geometry, _1, _2),
-	       std::bind(project_perspective,
-	                 _1, _2, _3, _4));
+	render(std::bind(integrate_direct<CornellBox>,
+                     geometry, _1, _2),
+           std::bind(project_perspective,
+                     _1, _2, _3, _4, _5),
+           std::bind(aa_offset,
+                     _1, _2, _3),
+           raster);
 
 	draw(raster);
 

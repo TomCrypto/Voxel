@@ -10,9 +10,6 @@
 
 #include "math/vector3.hpp"
 
-//#include "projection.hpp"
-//#include "integrator.hpp"
-
 // A screen raster, which holds a pixel buffer
 struct Raster
 {
@@ -34,33 +31,47 @@ private:
 	std::vector<math::float3> m_data;
 };
 
-template <typename IntegratorTy, typename ProjectionTy>
-void render(Raster &raster, IntegratorTy &&integrator,
-            ProjectionTy &&projection)
+template <typename Integrator,
+          typename Projection,
+          typename Subsampler>
+void render(Integrator &&integrator,
+            Projection &&projection,
+            Subsampler &&subsampler,
+            Raster &raster)
 {
-	// this is where the rendering happens:
-	// 1. project a camera ray for every pixel
-	// (according to some subpixel sampling distribution)
-	// 2. integrate the camera ray to assign a color
-	// 3. post-process as needed
-	// 4. output the rest
+    // integration step (this solves the rendering equation,
+    // and is where near 100% of the runtime will be spent)
 
-	// this is just a test render
+	// need to rewrite this to use float2's and maybe a ray structure
+
+    float ratio = (float)raster.width() / raster.height();
+
 	#pragma omp parallel for schedule(dynamic, 1)
 	for (size_t y = 0; y < raster.height(); ++y)
 	{
 		for (size_t x = 0; x < raster.width(); ++x)
 		{
-		    float px = ((float)x / raster.width() - 0.5f) * 2;
-		    float py = ((float)y / raster.height() - 0.5f) * 2;
-		    
-		    // (px, py) in [-1..1] (clip space)
-		    
-		    math::float3 origin, direction;
-		    
-		    projection(px, py, &origin, &direction);
+		    raster[y][x] = math::float3::zero();
+		    size_t s = 0;
+		    float dx, dy;
+		
+		    while (subsampler(s++, dx, dy))
+		    {
+		        float px = ((x + dx) / raster.width() - 0.5f) * 2;
+		        float py = ((y + dy) / raster.height() - 0.5f) * 2;
+		        
+		        // (px, py) in screen space coordinates (NOT accounting for aspect ratio)
+		        
+		        math::float3 origin, direction;
+		        
+		        projection(px, py, ratio, origin, direction);
 
-		    raster[y][x] = integrator(origin, direction);
+		        raster[y][x] += integrator(origin, direction);
+		    }
+		    
+		    raster[y][x] /= s - 1; // s = index after last sample point, so count is s - 1
 		}
 	}
+	
+	// post-processing goes here
 }
