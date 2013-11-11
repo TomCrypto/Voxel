@@ -20,6 +20,8 @@
 #include "subsampler/sample_naive.hpp"
 #include "subsampler/sample_aa.hpp"
 
+#include "display/x11_display.hpp"
+
 #include "compile_settings.hpp"
 
 void draw(const Raster &raster)
@@ -46,16 +48,15 @@ int main(int argc, char *argv[])
 
 	Raster raster(768, 768);
 	VoxelTest geometry;
+	X11Display disp("");
 
-	render(std::bind(integrate_depth<VoxelTest>,
-                     geometry, _1, _2),
-           std::bind(project_perspective,
-                     _1, _2, _3, _4, _5),
-           std::bind(aa_offset,
-                     _1, _2, _3),
+	render(std::bind(integrate_depth<VoxelTest>, geometry, _1, _2),
+           std::bind(project_perspective, _1, _2, _3, _4, _5),
+           std::bind(aa_offset, _1, _2, _3),
            raster);
 
-	draw(raster);
+	while (disp.draw(raster))
+		;
 
 	return EXIT_SUCCESS;
 }

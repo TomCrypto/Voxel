@@ -2,6 +2,7 @@
 #define VOXEL_MATH_VECTOR3_H
 
 #include <type_traits>
+#include <cstddef> // for size_t
 #include <cmath>
 
 namespace math
@@ -45,8 +46,8 @@ struct basic_vector3
 	basic_vector3 &operator /=(scalar b)
 		{ x/=b, y/=b, z/=b; return *this; }
 
-	scalar &operator [](size_t i) { return (&x)[i]; }
-	scalar operator [](size_t i) const { return (&x)[i]; }
+	scalar &operator [](size_t i) { return els[i]; }
+	scalar operator [](size_t i) const { return els[i]; }
 	
 	scalar length() const
 		{ return sqrt(x*x + y*y + z*z); }
