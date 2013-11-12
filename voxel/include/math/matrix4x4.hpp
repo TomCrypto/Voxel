@@ -51,8 +51,20 @@ struct basic_matrix4x4
 		return c;
 	}
 
-	scalar *operator [](size_t i) { return els[i]; }
-	const scalar *operator [](size_t i) const { return els[i]; }
+    // assumes last component of vector of 1
+    friend basic_vector3<Ty> operator *(const basic_matrix4x4 &a, const basic_vector3<Ty> &b)
+    {
+        basic_vector3<Ty> u(a.els[0], a.els[4], a.els[8]);
+        basic_vector3<Ty> v(a.els[1], a.els[5], a.els[9]);
+        basic_vector3<Ty> w(a.els[2], a.els[6], a.els[10]);
+
+        basic_vector3<Ty> product = u * b.x + v * b.y + w * b.z;
+
+        return product;
+    }
+
+	scalar &operator [](size_t i) { return els[i]; }
+	const scalar &operator [](size_t i) const { return els[i]; }
 
 	static const basic_matrix4x4 zero()
 		{ const scalar zeros[16] = {0};

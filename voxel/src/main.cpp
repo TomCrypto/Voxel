@@ -51,14 +51,14 @@ int main(int argc, char *argv[])
 	using namespace std::placeholders;
 
 	Raster raster(768, 768);
-	VoxelTest geometry;
+	CornellBox geometry;
 
     auto t1 = Clock::now();
 
-    size_t trials = 10;
+    size_t trials = 1;
     
     for (size_t t = 0; t < trials; ++t)
-	render(std::bind(integrate_depth<VoxelTest>,
+	render(std::bind(integrate_direct<CornellBox>,
                      geometry, _1, _2),
            std::bind(project_perspective,
                      _1, _2, _3, _4, _5),
