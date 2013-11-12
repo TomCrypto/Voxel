@@ -21,7 +21,7 @@ math::float3 integrate_direct(const GeometryTy &geometry,
 	{
 	    // compute hit point (push back outside the object a little)
 	    math::float3 hit = origin + direction * distance + 1e-5f * contact.normal;
-	    float ambient = 0.10f;
+	    float ambient = 0.25f;
 	    bool light_hit = false;
 	    
 	    // can we hit the light from here? if not, shadow
