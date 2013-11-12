@@ -26,7 +26,7 @@ void project_perspective(float u, float v, float ratio, math::float3 &origin, ma
 
     math::float3x3 view(left, up, forward);
 
-    math::float3 base_dir(ratio * u, -v, 1.0f / tan(fov / 2));
+    math::float3 base_dir(ratio * -u, -v, 1.0f / tan(fov / 2));
 
     math::float3 rotated_dir = view * normalize(base_dir);
 

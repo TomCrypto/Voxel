@@ -55,7 +55,7 @@ void render(Integrator &&integrator,
 			raster[y][x].b = int(temp.z * 255.0f);
 			raster[y][x].a = 255;
 		}
-	}
+    }
 	
 	// post-processing goes here
 }

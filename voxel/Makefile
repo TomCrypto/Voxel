@@ -15,7 +15,7 @@ DOC_DIR = doc/
 CXX ?= clang++
 CXXFLAGS = -O3 -march=native -Wall -Wextra -std=c++11 -fopenmp
 
-LDFLAGS = -lgomp -lX11 -lGL -lGLU
+LDFLAGS = -lX11 -lGL -lGLU -fopenmp
 TEST_LDFLAGS = -lgtest -pthread
 
 # Locate relevant source files, headers, and destination .obj's
@@ -36,7 +36,8 @@ default: build
 run: build
 	$(BIN)
 
-build: precompile $(BIN)
+# removed precompile for now, it forces a rebuild
+build: $(BIN)
 
 $(BIN): $(OBJ)
 	@mkdir -p $(BIN_DIR)
