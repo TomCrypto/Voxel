@@ -22,6 +22,8 @@
 
 #include "compile_settings.hpp"
 
+#include "math/vector4.hpp"
+
 void draw(const Raster &raster)
 {
 	FILE *file = fopen("out.ppm", "w");
@@ -73,6 +75,6 @@ int main(int argc, char *argv[])
     std::cout << "Time to render: " << ms.count() / trials << " ms." << std::endl;
 
 	draw(raster);
-
+	
 	return EXIT_SUCCESS;
 }

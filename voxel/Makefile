@@ -13,7 +13,7 @@ DOC_DIR = doc/
 # Define the default compiler settings
 
 CXX ?= clang++
-CXXFLAGS = -O3 -Wall -Wextra -std=c++11 -fopenmp
+CXXFLAGS = -O3 -march=native -Wall -Wextra -std=c++11 -fopenmp
 
 LDFLAGS = -lgomp
 TEST_LDFLAGS = -lgtest -pthread

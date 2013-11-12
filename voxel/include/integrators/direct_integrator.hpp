@@ -26,7 +26,7 @@ math::float3 integrate_direct(const GeometryTy &geometry,
 	    
 	    // can we hit the light from here? if not, shadow
 	    math::float3 dir_to_light = geometry.light() - hit;
-	    float distance_to_light = dir_to_light.length();
+	    float distance_to_light = length(dir_to_light);
 	    dir_to_light = normalize(dir_to_light);
 	    
 	    #if 0
@@ -47,11 +47,9 @@ math::float3 integrate_direct(const GeometryTy &geometry,
 	    else
 	    {
 	        float diffuse = std::max(0.0f, dot(contact.normal, dir_to_light)) * 0.85f / pow(distance_to_light, 2) * 0.10f;
-	    
+	        
 	        return (ambient + diffuse) * contact.rgb;
 	    }
-	    
-		return contact.normal * 0.5f + math::float3(0.5f, 0.5f, 0.5f);
 		
     }
 	else return math::float3(0, 0, 0); // no intersection

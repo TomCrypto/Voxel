@@ -51,7 +51,7 @@ void render(Integrator &&integrator,
 	{
 		for (size_t x = 0; x < raster.width(); ++x)
 		{
-		    raster[y][x] = math::float3::zero();
+		    raster[y][x] = math::float3();
 		    size_t s = 0;
 		    float dx, dy;
 		
