@@ -2,10 +2,21 @@
 
 #include <iostream>
 #include <cassert>
+#include <cstddef>
 #include <cmath>
+
+#include <emmintrin.h>
+#include <pmmintrin.h>
+#include <smmintrin.h>
 
 namespace math
 {
+    /** @struct basic_vector4
+      *
+      * A four-dimensional vector which handles arbitrary scalar types. As long
+      * as the scalar type forms (or at least approximates) a field, the vector
+      * implementation will work.
+    **/
     template <typename Ty>
     struct basic_vector4
     {
@@ -230,12 +241,14 @@ namespace math
                              << a[3] << "}";
     }
 
-    /*************************************************************************/
-
-    #include <emmintrin.h>
-    #include <pmmintrin.h>
-    #include <smmintrin.h>
-
+    /** @struct basic_vector4<float>
+      *
+      * The following code specializes the \c basic_vector4 implementation with
+      * single-precision floating-point scalar type, and uses SIMD instructions
+      * to improve performance.
+      *
+      * @remarks The typedef \c float4 is defined for convenience.
+    **/
     template<>
     struct basic_vector4<float>
     {
@@ -385,6 +398,7 @@ namespace math
     };
 
     template <>
+    inline
     float dot<float>(const basic_vector4<float> &a,
                      const basic_vector4<float> &b)
     {
@@ -397,4 +411,43 @@ namespace math
 
     typedef basic_vector4<float>   float4;
     typedef basic_vector4<double> double4;
+};
+
+namespace std
+{
+    template <typename scalar>
+    math::basic_vector4<scalar> min(const math::basic_vector4<scalar> &a,
+                                    const math::basic_vector4<scalar> &b)
+    {
+        return math::basic_vector4<scalar>(min(a.x, b.x),
+                                           min(a.y, b.y),
+                                           min(a.z, b.z),
+                                           min(a.w, b.w));
+    }
+    
+    template <typename scalar>
+    math::basic_vector4<scalar> max(const math::basic_vector4<scalar> &a,
+                                    const math::basic_vector4<scalar> &b)
+    {
+        return math::basic_vector4<scalar>(max(a.x, b.x),
+                                           max(a.y, b.y),
+                                           max(a.z, b.z),
+                                           max(a.w, b.w));
+    }
+    
+    template <>
+    inline
+    math::basic_vector4<float> min(const math::basic_vector4<float> &a,
+                                   const math::basic_vector4<float> &b)
+    {
+        return math::basic_vector4<float>(_mm_min_ps(a.sse, b.sse));
+    }
+    
+    template <>
+    inline
+    math::basic_vector4<float> max(const math::basic_vector4<float> &a,
+                                   const math::basic_vector4<float> &b)
+    {
+        return math::basic_vector4<float>(_mm_max_ps(a.sse, b.sse));
+    }
 };

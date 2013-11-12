@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <cstddef>
 
 #include "math/vector4.hpp"
 

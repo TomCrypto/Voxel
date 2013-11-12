@@ -62,18 +62,8 @@ bool ray_aabb(distance3 origin, distance3 direction,
     distance3 bot = (bmin - origin) / (direction + math::float3(1e-6f, 1e-6f, 1e-6f));
     distance3 top = (bmax - origin) / (direction + math::float3(1e-6f, 1e-6f, 1e-6f));
 
-    //math::float3 tmin = std::min(top, bot);
-    //math::float3 tmax = std::max(top, bot);
-    
-    distance3 tmin, tmax;
-    
-    tmin.x = std::min(top.x, bot.x);
-    tmin.y = std::min(top.y, bot.y);
-    tmin.z = std::min(top.z, bot.z);
-    
-    tmax.x = std::max(top.x, bot.x);
-    tmax.y = std::max(top.y, bot.y);
-    tmax.z = std::max(top.z, bot.z);
+    math::float3 tmin = std::min(top, bot);
+    math::float3 tmax = std::max(top, bot);
 
     *near = std::max(std::max(tmin.x, tmin.y), tmin.z);
     *far  = std::min(std::min(tmax.x, tmax.y), tmax.z);
@@ -138,12 +128,12 @@ private:
     // TODO: fix remaining bugs
 
     // CURRENT REASONS FOR BEING SLOW:
-    // 1. no SSE vector instructions
+    // 1. no SSE vector instructions  [WIP]
     // 2. unnecessary ray_aabb call in leaf
     // 3. recursion
     // 4. "intersections" buffer not optimized
     // 5. tree nodes allocated via malloc(), poor locality
-    // 6. ray_aabb is not optimized at all
+    // 6. ray_aabb is not optimized at all  [WIP]
     // 7. possible algorithmic improvements?
 
     // QUESTIONS TO RESOLVE:

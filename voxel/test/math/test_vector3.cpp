@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "math/vector3.hpp"
 #include <cmath>
+
+#include "math/vector3.hpp"
 
 using namespace math;
 
@@ -10,127 +11,272 @@ using namespace math;
 ******************************************************************************/
 #define MODULE                                                          vector3
 
-void ASSERT_FLOAT3_EQ(const float3 &u, const float3 &v)
+template <typename scalar>
+void ASSERT_VECTOR_EQ(const basic_vector3<scalar> &u,
+                      const basic_vector3<scalar> &v)
 {
     ASSERT_FLOAT_EQ(u.x, v.x);
     ASSERT_FLOAT_EQ(u.y, v.y);
     ASSERT_FLOAT_EQ(u.z, v.z);
 }
 
-TEST(MODULE, component_access)
+TEST(MODULE, float_component_access)
 {
-    size_t trials = 50000;
-    
-    for (size_t t = 0; t < trials; ++t)
-    {
-        float x = 1 * (float)t / trials;
-        float y = 2 * (float)t / trials;
-        float z = 3 * (float)t / trials;
-        
-        float3 u(x, y, z);
-        
-        ASSERT_FLOAT_EQ(x, u.x);
-        ASSERT_FLOAT_EQ(y, u.y);
-        ASSERT_FLOAT_EQ(z, u.z);
-        
-        ASSERT_FLOAT_EQ(u.x, u[0]);
-        ASSERT_FLOAT_EQ(u.y, u[1]);
-        ASSERT_FLOAT_EQ(u.z, u[2]);
-    }
+    float3 u(1, 2, 3);
+    ASSERT_FLOAT_EQ(u[0], 1);
+    ASSERT_FLOAT_EQ(u[1], 2);
+    ASSERT_FLOAT_EQ(u[2], 3);
+    ASSERT_FLOAT_EQ(u.x, 1);
+    ASSERT_FLOAT_EQ(u.y, 2);
+    ASSERT_FLOAT_EQ(u.z, 3);
 }
 
-TEST(MODULE, vector_addition)
+TEST(MODULE, float_vector_addition_in_place)
 {
-    size_t trials = 50000;
-    size_t terms = 25;
-    
-    for (size_t t = 0; t < trials; ++t)
-    {
-        float s1 = 1 * (float)t / trials;
-        float s2 = 2 * (float)t / trials;
-        float s3 = 3 * (float)t / trials;
-        
-        float3 sum(0, 0, 0);
-        
-        for (size_t t = 0; t < terms; ++t)
-            sum += float3(s1 * t, s2 * t, s3 * t);
-            
-        float output = terms * (terms - 1) / 2;
-
-        ASSERT_FLOAT3_EQ(sum, float3(s1 * output,
-                                     s2 * output,
-                                     s3 * output));
-    }
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    u += v;
+    ASSERT_VECTOR_EQ(u, float3(5, 7, 9));
 }
 
-TEST(MODULE, vector_subtraction)
+TEST(MODULE, float_vector_subtraction_in_place)
 {
-    size_t trials = 50000;
-    
-    for (size_t t = 0; t < trials; ++t)
-    {
-        float x = 1 * (float)t / trials;
-        float y = 2 * (float)t / trials;
-        float z = 3 * (float)t / trials;
-        
-        float3 u(+1, +2, +3);
-        float3 v(+x, +y, +z);
-        float3 w(-x, -y, -z);
-        
-        ASSERT_FLOAT3_EQ(u - v, u + w);
-    }
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    u -= v;
+    ASSERT_VECTOR_EQ(u, float3(-3, -3, -3));
 }
 
-TEST(MODULE, scalar_multiplication)
+TEST(MODULE, float_vector_multiplication_in_place)
 {
-    size_t trials = 50000;
-    
-    for (size_t t = 0; t < trials; ++t)
-    {
-        float s = (float)t / trials;
-        
-        float3 u(1    , 2,     3    );
-        float3 v(1 * s, 2 * s, 3 * s);
-        
-        ASSERT_FLOAT3_EQ(u * s, v);
-        ASSERT_FLOAT3_EQ(s * u, v);
-    }
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    u *= v;
+    ASSERT_VECTOR_EQ(u, float3(4, 10, 18));
 }
 
-TEST(MODULE, scalar_division)
+TEST(MODULE, float_vector_division_in_place)
 {
-    size_t trials = 50000;
-    
-    for (size_t t = 0; t < trials; ++t)
-    {
-        float s = 1 - (float)t / trials;
-        
-        float3 u(1    , 2,     3    );
-        float3 v(1 / s, 2 / s, 3 / s);
-        
-        ASSERT_FLOAT3_EQ(u / s, v);
-        ASSERT_FLOAT3_EQ(s / u, v);
-    }
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    u /= v;
+    ASSERT_VECTOR_EQ(u, float3(1.0f / 4.0f, 2.0f / 5.0f, 3.0f / 6.0f));
 }
 
-TEST(MODULE, dot_product)
+TEST(MODULE, float_scalar_multiplication_in_place)
 {
-    size_t trials = 50000;
-    
-    for (size_t t = 0; t < trials; ++t)
-    {
-        float s = (float)t / trials;
-    
-        float3 u(1 * s, 2 * s, 3 * s);
-        float3 v(4 * s, 5 * s, 6 * s);
-        float result = 32 * pow(s, 2);
-        
-        ASSERT_FLOAT_EQ(dot(u, v), result);
-        ASSERT_FLOAT_EQ(dot(u, v), dot(v, u));
-        ASSERT_FLOAT_EQ(dot(u * s, u), s * dot(u, u));
-        ASSERT_FLOAT_EQ(dot(u, u + v), dot(u, u) + dot(u, v));
-        ASSERT_FLOAT_EQ(dot(float3(1, 0, 1), float3(0, 1, 0)), 0);
-    }
+    float3 u(1, 2, 3);
+    float s = 4;
+    u *= s;
+    ASSERT_VECTOR_EQ(u, float3(4, 8, 12));
 }
+
+TEST(MODULE, float_scalar_division_in_place)
+{
+    float3 u(1, 2, 3);
+    float s = 4;
+    u /= s;
+    ASSERT_VECTOR_EQ(u, float3(1.0f / 4.0f, 2.0f / 4.0f, 3.0f / 4.0f));
+}
+
+TEST(MODULE, float_vector_addition_constructive)
+{
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(u + v, float3(5, 7, 9));
+}
+
+TEST(MODULE, float_vector_subtraction_constructive)
+{
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(u - v, float3(-3, -3, -3));
+}
+
+TEST(MODULE, float_vector_multiplication_constructive)
+{
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(u * v, float3(4, 10, 18));
+}
+
+TEST(MODULE, float_vector_division_constructive)
+{
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(u / v, float3(1.0f / 4.0f, 2.0f / 5.0f, 3.0f / 6.0f));
+}
+
+TEST(MODULE, float_scalar_multiplication_constructive)
+{
+    float3 u(1, 2, 3);
+    float s = 4;
+    ASSERT_VECTOR_EQ(u * s, float3(4, 8, 12));
+}
+
+TEST(MODULE, float_scalar_division_constructive)
+{
+    float3 u(1, 2, 3);
+    float s = 4;
+    ASSERT_VECTOR_EQ(u / s, float3(1.0f / 4.0f, 2.0f / 4.0f, 3.0f / 4.0f));
+}
+
+TEST(MODULE, float_dot)
+{
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    ASSERT_FLOAT_EQ(dot(u, v), 32);
+}
+
+TEST(MODULE, float_length)
+{
+    float3 u(1, 2, 3);
+    ASSERT_FLOAT_EQ(length(u), 3.74165738677394138558f);
+}
+
+TEST(MODULE, float_normalize)
+{
+    float3 u(1, 2, 3);
+    ASSERT_VECTOR_EQ(normalize(u), float3(0.267261242f,
+                                          0.534522484f,
+                                          0.801783726f));
+}
+
+TEST(MODULE, float_cross)
+{
+    float3 u(1, 2, 3);
+    float3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(cross(u, v), float3(-3, 6, -3));
+}
+
+TEST(MODULE, double_component_access)
+{
+    double3 u(1, 2, 3);
+    ASSERT_DOUBLE_EQ(u[0], 1);
+    ASSERT_DOUBLE_EQ(u[1], 2);
+    ASSERT_DOUBLE_EQ(u[2], 3);
+    ASSERT_DOUBLE_EQ(u.x, 1);
+    ASSERT_DOUBLE_EQ(u.y, 2);
+    ASSERT_DOUBLE_EQ(u.z, 3);
+}
+
+TEST(MODULE, double_vector_addition_in_place)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    u += v;
+    ASSERT_VECTOR_EQ(u, double3(5, 7, 9));
+}
+
+TEST(MODULE, double_vector_subtraction_in_place)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    u -= v;
+    ASSERT_VECTOR_EQ(u, double3(-3, -3, -3));
+}
+
+TEST(MODULE, double_vector_multiplication_in_place)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    u *= v;
+    ASSERT_VECTOR_EQ(u, double3(4, 10, 18));
+}
+
+TEST(MODULE, double_vector_division_in_place)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    u /= v;
+    ASSERT_VECTOR_EQ(u, double3(1.0 / 4.0, 2.0 / 5.0, 3.0 / 6.0));
+}
+
+TEST(MODULE, double_scalar_multiplication_in_place)
+{
+    double3 u(1, 2, 3);
+    double s = 4;
+    u *= s;
+    ASSERT_VECTOR_EQ(u, double3(4, 8, 12));
+}
+
+TEST(MODULE, double_scalar_division_in_place)
+{
+    double3 u(1, 2, 3);
+    double s = 4;
+    u /= s;
+    ASSERT_VECTOR_EQ(u, double3(1.0 / 4.0, 2.0 / 4.0, 3.0 / 4.0));
+}
+
+TEST(MODULE, double_vector_addition_constructive)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(u + v, double3(5, 7, 9));
+}
+
+TEST(MODULE, double_vector_subtraction_constructive)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(u - v, double3(-3, -3, -3));
+}
+
+TEST(MODULE, double_vector_multiplication_constructive)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(u * v, double3(4, 10, 18));
+}
+
+TEST(MODULE, double_vector_division_constructive)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(u / v, double3(1.0 / 4.0, 2.0 / 5.0, 3.0 / 6.0));
+}
+
+TEST(MODULE, double_scalar_multiplication_constructive)
+{
+    double3 u(1, 2, 3);
+    double s = 4;
+    ASSERT_VECTOR_EQ(u * s, double3(4, 8, 12));
+}
+
+TEST(MODULE, double_scalar_division_constructive)
+{
+    double3 u(1, 2, 3);
+    double s = 4;
+    ASSERT_VECTOR_EQ(u / s, double3(1.0 / 4.0, 2.0 / 4.0, 3.0 / 4.0));
+}
+
+TEST(MODULE, double_dot)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    ASSERT_DOUBLE_EQ(dot(u, v), 32);
+}
+
+TEST(MODULE, double_length)
+{
+    double3 u(1, 2, 3);
+    ASSERT_DOUBLE_EQ(length(u), 3.74165738677394138558);
+}
+
+TEST(MODULE, double_normalize)
+{
+    double3 u(1, 2, 3);
+    ASSERT_VECTOR_EQ(normalize(u), double3(0.267261242,
+                                           0.534522484,
+                                           0.801783726));
+}
+
+TEST(MODULE, double_cross)
+{
+    double3 u(1, 2, 3);
+    double3 v(4, 5, 6);
+    ASSERT_VECTOR_EQ(cross(u, v), double3(-3, 6, -3));
+}
+
 
 

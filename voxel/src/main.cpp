@@ -20,9 +20,14 @@
 #include "subsampler/sample_naive.hpp"
 #include "subsampler/sample_aa.hpp"
 
+#include "display/x11_display.hpp"
+
 #include "compile_settings.hpp"
 
-#include "math/vector4.hpp"
+#include <chrono>
+
+typedef std::chrono::high_resolution_clock Clock;
+typedef std::chrono::milliseconds milliseconds;
 
 void draw(const Raster &raster)
 {
@@ -35,46 +40,38 @@ void draw(const Raster &raster)
 	for (size_t y = 0; y < raster.height(); ++y)
 	for (size_t x = 0; x < raster.width(); ++x)
 	    fprintf(file, "%d %d %d ",
-		    (int)(std::min(raster[y][x].x, 1.0f) * 255.0f),
-		    (int)(std::min(raster[y][x].y, 1.0f) * 255.0f),
-		    (int)(std::min(raster[y][x].z, 1.0f) * 255.0f));
+		    raster[y][x].r,
+		    raster[y][x].g,
+		    raster[y][x].b);
 
 	fclose(file);
 }
-
-#include <chrono>
-#include <iostream>
-
-typedef std::chrono::high_resolution_clock Clock;
-typedef std::chrono::milliseconds milliseconds;
 
 int main(int argc, char *argv[])
 {
 	using namespace std::placeholders;
 
-	Raster raster(768, 768);
-	CornellBox geometry;
+	Raster raster(512, 512);
+	VoxelTest geometry;
+	X11Display disp(512, 512, "Voxel Engine");
+	
+	auto t1 = Clock::now();
 
-    auto t1 = Clock::now();
-
-    size_t trials = 1;
-    
-    for (size_t t = 0; t < trials; ++t)
-	render(std::bind(integrate_direct<CornellBox>,
-                     geometry, _1, _2),
-           std::bind(project_perspective,
-                     _1, _2, _3, _4, _5),
-           std::bind(aa_offset,
-                     _1, _2, _3),
-           raster);
-           
-    auto t2 = Clock::now();
+	render(std::bind(integrate_direct<VoxelTest>, geometry, _1, _2),
+           std::bind(project_perspective, _1, _2, _3, _4, _5),
+           std::bind(aa_offset, _1, _2, _3),
+	       raster);
+	       
+	auto t2 = Clock::now();
     
     milliseconds ms = std::chrono::duration_cast<milliseconds>(t2 - t1);
     
-    std::cout << "Time to render: " << ms.count() / trials << " ms." << std::endl;
+    std::cout << "Time to render: " << ms.count() << " ms." << std::endl;
 
 	draw(raster);
 	
+	while (disp.draw(raster))
+		;
+		
 	return EXIT_SUCCESS;
 }

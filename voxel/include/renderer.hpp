@@ -9,27 +9,7 @@
 #include <functional>
 
 #include "math/vector3.hpp"
-
-// A screen raster, which holds a pixel buffer
-struct Raster
-{
-	Raster(size_t width, size_t height)
-	  : m_width(width), m_height(height), m_data(width * height)
-	{
-	}
-
-	const math::float3 *operator[](size_t y) const
-		{ return &m_data[y * m_width]; }
-	math::float3 *operator[](size_t y)
-		{ return &m_data[y * m_width]; }
-
-	size_t width() const { return m_width; }
-	size_t height() const { return m_height; }
-
-private:
-	const size_t m_width, m_height;
-	std::vector<math::float3> m_data;
-};
+#include "display/raster.hpp"
 
 template <typename Integrator,
           typename Projection,
@@ -51,7 +31,7 @@ void render(Integrator &&integrator,
 	{
 		for (size_t x = 0; x < raster.width(); ++x)
 		{
-		    raster[y][x] = math::float3();
+		    math::float3 temp = math::float3();
 		    size_t s = 0;
 		    float dx, dy;
 		
@@ -66,10 +46,14 @@ void render(Integrator &&integrator,
 		        
 		        projection(px, py, ratio, origin, direction);
 
-		        raster[y][x] += integrator(origin, direction);
+				temp += integrator(origin, direction);
 		    }
 		    
-		    raster[y][x] /= s - 1; // s = index after last sample point, so count is s - 1
+			temp /= s - 1; // s = index after last sample point, so count is s - 1
+			raster[y][x].r = int(temp.x * 255.0f); 
+			raster[y][x].g = int(temp.y * 255.0f);
+			raster[y][x].b = int(temp.z * 255.0f);
+			raster[y][x].a = 255;
 		}
 	}
 	
