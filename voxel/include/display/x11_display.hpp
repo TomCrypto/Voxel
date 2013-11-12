@@ -6,7 +6,8 @@
 class X11Display
 {
 public:
-	X11Display(const char *params) { init(params); }
+	X11Display(int width, int height, const char *name)
+		: width(width), height(height) { init(name); }
 	~X11Display();
 
 	// @summary: Attempts to present the raster object visually on the display.
@@ -21,6 +22,8 @@ private:
 	Display *server;
 	GLXContext gl;
 	Atom wm_del;
+	int width, height;
 
-	void init(const char *params);
+	void init(const char *name);
+	void remap();
 };

@@ -31,7 +31,7 @@ void render(Integrator &&integrator,
 	{
 		for (size_t x = 0; x < raster.width(); ++x)
 		{
-		    raster[y][x] = math::float3::zero();
+		    math::float3 temp = math::float3::zero();
 		    size_t s = 0;
 		    float dx, dy;
 		
@@ -46,10 +46,14 @@ void render(Integrator &&integrator,
 		        
 		        projection(px, py, ratio, origin, direction);
 
-		        raster[y][x] += integrator(origin, direction);
+				temp += integrator(origin, direction);
 		    }
 		    
-		    raster[y][x] /= s - 1; // s = index after last sample point, so count is s - 1
+			temp /= s - 1; // s = index after last sample point, so count is s - 1
+			raster[y][x].r = int(temp.x * 255.0f); 
+			raster[y][x].g = int(temp.y * 255.0f);
+			raster[y][x].b = int(temp.z * 255.0f);
+			raster[y][x].a = 255;
 		}
 	}
 	

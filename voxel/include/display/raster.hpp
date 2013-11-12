@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstddef>
 
+struct color { unsigned char r, g, b, a; };
+
 // A screen raster, which holds a pixel buffer
 struct Raster
 {
@@ -12,15 +14,17 @@ struct Raster
 	{
 	}
 
-	const math::float3 *operator[](size_t y) const
+	const color *operator[](size_t y) const
 		{ return &m_data[y * m_width]; }
-	math::float3 *operator[](size_t y)
+	color *operator[](size_t y)
 		{ return &m_data[y * m_width]; }
 
 	size_t width() const { return m_width; }
 	size_t height() const { return m_height; }
+	const color *pixels() const { return &m_data[0]; };
+	color *pixels() { return &m_data[0]; };
 
 private:
 	const size_t m_width, m_height;
-	std::vector<math::float3> m_data;
+	std::vector<color> m_data;
 };

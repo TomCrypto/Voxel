@@ -15,7 +15,7 @@ DOC_DIR = doc/
 CXX ?= clang++
 CXXFLAGS = -O3 -Wall -Wextra -std=c++11 -fopenmp
 
-LDFLAGS = -lgomp -lX11 -lGL
+LDFLAGS = -lgomp -lX11 -lGL -lGLU
 TEST_LDFLAGS = -lgtest -pthread
 
 # Locate relevant source files, headers, and destination .obj's

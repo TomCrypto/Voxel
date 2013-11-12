@@ -35,9 +35,9 @@ void draw(const Raster &raster)
 	for (size_t y = 0; y < raster.height(); ++y)
 	for (size_t x = 0; x < raster.width(); ++x)
 	    fprintf(file, "%d %d %d ",
-		    (int)(std::min(raster[y][x].x, 1.0f) * 255.0f),
-		    (int)(std::min(raster[y][x].y, 1.0f) * 255.0f),
-		    (int)(std::min(raster[y][x].z, 1.0f) * 255.0f));
+		    raster[y][x].r,
+		    raster[y][x].g,
+		    raster[y][x].b);
 
 	fclose(file);
 }
@@ -46,14 +46,16 @@ int main(int argc, char *argv[])
 {
 	using namespace std::placeholders;
 
-	Raster raster(768, 768);
+	Raster raster(512, 512);
 	VoxelTest geometry;
-	X11Display disp("");
+	X11Display disp(512, 512, "Voxel Engine");
 
 	render(std::bind(integrate_depth<VoxelTest>, geometry, _1, _2),
            std::bind(project_perspective, _1, _2, _3, _4, _5),
            std::bind(aa_offset, _1, _2, _3),
-           raster);
+	       raster);
+
+	draw(raster);
 
 	while (disp.draw(raster))
 		;

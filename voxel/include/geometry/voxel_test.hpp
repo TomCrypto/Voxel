@@ -86,16 +86,35 @@ class VoxelTest
 public:
     distance3 light() const
     {
-        return math::float3(0.2f, -0.4f, 0.3f);
+        return distance3(0.2f, -0.4f, 0.3f);
     }
     
     bool traverse(const distance3 &origin, const distance3 &direction,
-		          distance &distance, Contact &contact) const
+		          distance &dist, Contact &contact) const
 	{
 	    return traverse(root, svo_depth, origin, direction,
-                        math::float3(-1, -1, -1), math::float3(1, 1, 1),
-                        distance, contact);
+                        distance3(-1, -1, -1), distance3(1, 1, 1),
+                        dist, std::numeric_limits<distance>::infinity(), contact);
 	}
+
+    bool occludes(const distance3 &origin, const distance3 &direction,
+                  distance &dist, distance target_dist, Contact &contact) const
+    {
+        return traverse(root, svo_depth, origin, direction,
+                        distance3(-1, -1, -1), distance3(1, 1, 1),
+                        dist, target_dist, contact);
+    }
+
+    bool occludes(const distance3 &origin, const distance3 &direction,
+                  distance target_dist) const
+    {
+        float dist;
+        Contact contact;
+
+        return traverse(root, svo_depth, origin, direction,
+                        distance3(-1, -1, -1), distance3(1, 1, 1),
+                        dist, target_dist, contact);
+    }
 	
 	VoxelTest()
 	{
@@ -103,8 +122,8 @@ public:
 	    printf("This will take a long time because my voxel containment test is extraordinarily bad. "
 	           "Go make yourself a coffee or something while it finds out which voxels "
 	           "should be filled.\n");
-	    root = (SVONode*)build_SVO(svo_depth, math::float3(-1, -1, -1), math::float3(1, 1, 1));
-	    printf("SVO built (%d voxels).\n", voxel_count);
+	    root = (SVONode*)build_SVO(svo_depth, distance3(-1, -1, -1), distance3(1, 1, 1));
+	    printf("SVO built (%d voxels, depth = %d).\n", voxel_count, svo_depth);
 	}
 	
 private:
@@ -146,7 +165,8 @@ private:
     //   64km^3 "chunks", optimized for ultra fast traversal, and another
     //   which focuses on culling chunks to improve performance
     bool traverse(void *node, int depth, const distance3 &origin, const distance3 &direction,
-		          distance3 min, distance3 max, distance &dist, Contact &contact) const
+		          distance3 min, distance3 max, distance &dist, distance
+                  max_dist, Contact &contact) const
 	{
 	    if (depth == 0)
 	    {
@@ -164,7 +184,7 @@ private:
 	    
 	    SVONode *parent = (SVONode*)node;
 	    
-	    dist = std::numeric_limits<distance>::infinity();
+	    dist = max_dist;
         Intersection intersections[4]; // at most
 
         for (size_t t = 0; t < 4; ++t)
@@ -186,10 +206,13 @@ private:
 
             if (ray_aabb(origin, direction, min_child, max_child, &near, &far))
             {
-                intersections[count].index = t;
-                intersections[count].near = near;
-                intersections[count].far = far;
-                ++count;
+                if (near < max_dist)
+                {
+                    intersections[count].index = t;
+                    intersections[count].near = near;
+                    intersections[count].far = far;
+                    ++count;
+                }
             }
         }
 
@@ -210,7 +233,7 @@ private:
             if (traverse(parent->children[child_index], depth - 1,
                          origin, direction,
                          min_child, max_child,
-                         d, tmp))
+                         d, dist, tmp))
             {
                 if (d < dist) // is this closer?
                 {
@@ -225,7 +248,7 @@ private:
             }
         }
 
-        return (dist > 0) && (dist < std::numeric_limits<distance>::infinity());
+        return (dist > 0) && (dist < max_dist);
 	}
 
     // this will be done in a separate program later on (SVO's will be
@@ -284,18 +307,18 @@ private:
         if ((z <= 0.2f)) return std::numeric_limits<distance>::infinity();
         
         
-        //return -0.7f + 0.03f * (sin(15 * z) + sin(10 * x + 1));
+        return -0.7f + 0.03f * (sin(15 * z) + sin(10 * x + 1));
         
-        return -2.0f/3.0f + 0.2f * x * x;
+        //return -2.0f/3.0f + 0.2f * x * x;
     }
     
     math::float3 normal(distance x, distance z) const // TEMPORARY
     {
-        //distance dx = 0.2 * cos(10 * x + 1);
-        //distance dz = 0.3 * cos(15 * z);
+        distance dx = 0.2 * cos(10 * x + 1);
+        distance dz = 0.3 * cos(15 * z);
 
-        distance dx = 0.4f * x;
-        distance dz = 0;
+        //distance dx = 0.4f * x;
+        //distance dz = 0;
     
         return normalize(distance3(dx, 1, dz));
     }
@@ -334,7 +357,7 @@ private:
                 if ((min.y <= height) && (height <= max.y))
                 {
                     voxel->normal = normal(x, z);
-                    voxel->rgb = distance3(1, 1, 1) * std::min(std::max(0.0f, std::abs(height)), 1.0f);
+                    voxel->rgb = math::float3(0.25, 0.75, 0.25) * std::min(std::max(0.0f, std::abs(height)), 1.0f);
                 }
             }
     }
