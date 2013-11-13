@@ -27,6 +27,7 @@ doc/
 *.ppm
 *.hdr
 *.pic
+*.png
 
 *.ipch
 
