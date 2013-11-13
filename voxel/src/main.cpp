@@ -13,6 +13,7 @@
 #include "integrators/flat_integrator.hpp"
 #include "integrators/direct_integrator.hpp"
 #include "integrators/depth_integrator.hpp"
+#include "integrators/occlusion_integrator.hpp"
 
 #include "projections/test_perspective.hpp"
 #include "projections/fisheye.hpp"
@@ -57,10 +58,10 @@ int main(int argc, char *argv[])
 	
 	auto t1 = Clock::now();
 
-	render(std::bind(integrate_direct<VoxelTest>, geometry, _1, _2),
+    render(std::bind(integrate_direct<VoxelTest>, geometry, _1, _2),
            std::bind(project_perspective, _1, _2, _3, _4, _5),
            std::bind(aa_offset, _1, _2, _3),
-	       raster);
+           raster);
 	       
 	auto t2 = Clock::now();
     
