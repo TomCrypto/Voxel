@@ -76,6 +76,14 @@ namespace math
                                  a.y * b,
                                  a.z * b);
         }
+        
+        friend basic_vector3 operator /(const scalar &b,
+                                        const basic_vector3 &a)
+		{
+            return basic_vector3(b / a.x,
+                                 b / a.y,
+                                 b / a.z);
+        }
 
 	    friend basic_vector3 operator /(const basic_vector3 &a,
                                         const scalar &b)
@@ -306,6 +314,12 @@ namespace math
                                         const basic_vector3 &a)
 	    {
             return _mm_mul_ps(a.sse, _mm_set_ps(b, b, b, b));
+        }
+        
+        friend basic_vector3 operator /(float b,
+                                        const basic_vector3 &a)
+	    {
+            return _mm_div_ps(_mm_set_ps(b, b, b, b), a.sse);
         }
 
 	    friend basic_vector3 operator /(const basic_vector3 &a,

@@ -2,6 +2,8 @@
 
 /* Voxel test with procedural data. */
 
+// NEEDS TO BE CLEANED UP
+
 #include "math/vector3.hpp"
 #include <cmath>
 
@@ -42,6 +44,18 @@ static void subdivide(distance3 min_node, distance3 max_node, int index,
         
     min_child = new_origin - extent * .5f;
     max_child = new_origin + extent * .5f;
+    
+    // the vector code below is slow for some reason
+    
+    /*distance3 extent = (max_node - min_node) * .5;
+    
+    // might be possible to hardware-accelerate this?
+    distance3 offset = distance3((index >> 2) & 1,
+                                 (index >> 1) & 1,
+                                 (index >> 0) & 1);
+    
+    min_child = min_node + extent * offset;
+    max_child = min_child + extent;*/
 }
 
 
@@ -142,13 +156,12 @@ static int voxel_count = 0;
 
 // to optimize
 inline
-static bool ray_aabb(distance3 origin, distance3 direction,
+static bool ray_aabb(distance3 origin, distance3 inv_dir,
                      distance3 bmin, distance3 bmax,
                      distance &near)
 {
-    // TODO: epsilons needed to avoid errors (find solution)
-    distance3 bot = (bmin - origin) / (direction + math::float3(1e-6f, 1e-6f, 1e-6f));
-    distance3 top = (bmax - origin) / (direction + math::float3(1e-6f, 1e-6f, 1e-6f));
+    distance3 bot = (bmin - origin) * inv_dir;
+    distance3 top = (bmax - origin) * inv_dir;
 
     math::float3 tmin = std::min(top, bot);
     math::float3 tmax = std::max(top, bot);
@@ -164,11 +177,11 @@ class VoxelTest
 public:
     distance3 light() const
     {
-        return distance3(0.2f, -0.4f, 0.3f);
+        return distance3(0.2f, -0.3f, 0.3f);
     }
     
-    bool traverse(const distance3 &origin, const distance3 &direction,
-		          distance &dist, Contact &contact) const
+    bool intersects(const distance3 &origin, const distance3 &direction,
+		            distance &dist, Contact &contact) const
 	{
         return traverse(origin, direction,
                         std::numeric_limits<distance>::infinity(), dist, contact, false);
@@ -197,7 +210,6 @@ public:
     {
         return occludes(origin, direction, std::numeric_limits<distance>::infinity());
     }
-
 	
 	VoxelTest()
 	{
@@ -252,7 +264,7 @@ private:
     // 2. unnecessary ray_aabb call in leaf [fixed]
     // 3. recursion [fixed]
     // 4. "intersections" buffer not optimized [fixed]
-    // 5. tree nodes allocated via malloc(), poor locality
+    // 5. tree nodes allocated via malloc(), poor locality [?]
     // 6. ray_aabb is not optimized at all  [WIP]
     // 7. possible algorithmic improvements?
 
@@ -278,6 +290,7 @@ private:
                   const distance   &range,       distance    &nearest,
                         Contact  &contact, const bool       occlusion) const
     {
+        const distance3 &inv_dir = 1 / direction;
         stack_item stack[4 * svo_depth];
         size_t ptr = 0;
 
@@ -288,7 +301,6 @@ private:
 
         while (ptr)
         {
-            /* Reject early if possible. */
             stack_item s = pop(stack, ptr);
             if (s.hit >= nearest) continue;
 
@@ -308,12 +320,12 @@ private:
                     void *child = parent->child[t];
                     if (child == nullptr) continue;
 
-                    stack_item c(child, s, t); /* Subdivide this node. */
-                    if (ray_aabb(origin, direction, c.min, c.max, c.hit))
+                    stack_item c(child, s, t); /* Child subdivision. */
+                    if (ray_aabb(origin, inv_dir, c.min, c.max, c.hit))
                         if (c.hit < nearest) push(children, hits, c);
                 }
 
-                sort_network(children); /* Improve early reject. */
+                sort_network(children); /* Pushed front to back. */
                 while (hits) push(stack, ptr, pop(children, hits));
             }
         }

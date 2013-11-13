@@ -36,12 +36,12 @@ public:
         float distance;
         Contact contact;
         
-        traverse(origin, direction, distance, contact);
+        intersects(origin, direction, distance, contact);
         return (distance < max_dist);
     }
 
-	bool traverse(const math::float3 &origin, const math::float3 &direction,
-		          float &distance, Contact &contact) const
+	bool intersects(const math::float3 &origin, const math::float3 &direction,
+		           float &distance, Contact &contact) const
 	{
 	    bool plane = true;
 	    int index = -1;

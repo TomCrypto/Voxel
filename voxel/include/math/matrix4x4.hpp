@@ -23,7 +23,10 @@ namespace math
 
 	    basic_matrix4x4(const basic_matrix4x4 &copy)
 	    {
-            col = copy.col;
+            col[0] = copy.col[0];
+            col[1] = copy.col[1];
+            col[2] = copy.col[2];
+            col[3] = copy.col[3];
 	    }
 
 	    basic_matrix4x4(const basic_vector4<scalar> &a,

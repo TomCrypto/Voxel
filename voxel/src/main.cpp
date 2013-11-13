@@ -10,16 +10,9 @@
 #include "geometry/cornell_box.hpp"
 #include "geometry/voxel_test.hpp"
 
-#include "integrators/flat_integrator.hpp"
-#include "integrators/direct_integrator.hpp"
-#include "integrators/depth_integrator.hpp"
-#include "integrators/occlusion_integrator.hpp"
-
-#include "projections/test_perspective.hpp"
-#include "projections/fisheye.hpp"
-
-#include "subsampler/sample_naive.hpp"
-#include "subsampler/sample_aa.hpp"
+#include "integrators/generic.hpp"
+#include "projections/generic.hpp"
+#include "subsamplers/generic.hpp"
 
 #include "display/x11_display.hpp"
 
@@ -57,12 +50,12 @@ int main(int argc, char *argv[])
 	X11Display disp(512, 512, "Voxel Engine");
 	
 	auto t1 = Clock::now();
-
-    render(std::bind(integrate_direct<VoxelTest>, geometry, _1, _2),
-           std::bind(project_perspective, _1, _2, _3, _4, _5),
-           std::bind(aa_offset, _1, _2, _3),
+	
+    render(std::bind(integrators::direct<VoxelTest>, geometry, _1, _2),
+           std::bind(projections::perspective, _1, _2, _3, _4, _5),
+           std::bind(subsamplers::none, _1, _2, _3),
            raster);
-	       
+	
 	auto t2 = Clock::now();
     
     milliseconds ms = std::chrono::duration_cast<milliseconds>(t2 - t1);

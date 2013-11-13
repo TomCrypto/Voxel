@@ -44,9 +44,8 @@ void render(Integrator &&integrator,
 		        
 		        math::float3 origin, direction;
 		        
-		        projection(px, py, ratio, origin, direction);
-
-				temp += integrator(origin, direction);
+		        if (projection(px, py, ratio, origin, direction))
+    				temp += integrator(origin, direction);
 		    }
 		    
 			temp /= s - 1; // s = index after last sample point, so count is s - 1

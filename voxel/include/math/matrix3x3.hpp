@@ -22,7 +22,9 @@ namespace math
 
 	    basic_matrix3x3(const basic_matrix3x3 &copy)
 	    {
-            col = copy.col;
+            col[0] = copy.col[0];
+            col[1] = copy.col[1];
+            col[2] = copy.col[2];
 	    }
 
 	    basic_matrix3x3(const basic_vector3<scalar> &a,
