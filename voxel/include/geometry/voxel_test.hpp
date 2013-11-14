@@ -189,7 +189,7 @@ static bool ray_aabb(distance3 origin, distance3 inv_dir,
     near = std::max(std::max(tmin.x, tmin.y), tmin.z);
     distance far = std::min(std::min(tmax.x, tmax.y), tmax.z);
 
-    return !(near > far) && far > 0;
+    return near < far && far > 0;
 }
 
 class VoxelTest
