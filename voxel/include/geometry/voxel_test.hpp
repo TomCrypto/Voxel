@@ -24,6 +24,27 @@ struct Voxel
     math::float3 rgb; // that's a color
 };
 
+template <size_t index>
+static distance3 offset()
+{
+    return distance3((index >> 2) & 1,
+                     (index >> 1) & 1,
+                     (index >> 0) & 1);
+}
+
+// (this will probably remain in cache permanently)
+static distance3 offsets[8] = // epic performance hack
+{
+    offset<0>(),
+    offset<1>(),
+    offset<2>(),
+    offset<3>(),
+    offset<4>(),
+    offset<5>(),
+    offset<6>(),
+    offset<7>(),
+};
+
 // this is also needed by the traversal code (no sense storing the
 // bounding box of each voxel when it can be readily inferred from
 // its location in the octree datastructure)
@@ -33,7 +54,7 @@ inline
 static void subdivide(distance3 min_node, distance3 max_node, int index,
                       distance3 &min_child, distance3 &max_child)
 {
-    distance3 extent = (max_node - min_node) / 2;
+    /*distance3 extent = (max_node - min_node) / 2;
     
     distance3 origin = (max_node + min_node) / 2;
     distance3 new_origin;
@@ -43,26 +64,25 @@ static void subdivide(distance3 min_node, distance3 max_node, int index,
     new_origin.z = origin.z + extent.z * (index&1 ? .5f : -.5f);
         
     min_child = new_origin - extent * .5f;
-    max_child = new_origin + extent * .5f;
+    max_child = new_origin + extent * .5f;*/
     
     // the vector code below is slow for some reason
     
-    /*distance3 extent = (max_node - min_node) * .5;
+    distance3 extent = (max_node - min_node) * .5;
     
     // might be possible to hardware-accelerate this?
-    distance3 offset = distance3((index >> 2) & 1,
+    /*distance3 offset = distance3((index >> 2) & 1,
                                  (index >> 1) & 1,
-                                 (index >> 0) & 1);
+                                 (index >> 0) & 1);*/
     
-    min_child = min_node + extent * offset;
-    max_child = min_child + extent;*/
+    min_child = min_node + extent * offsets[index];
+    max_child = min_child + extent;
 }
 
-
-struct SVONode
+struct Node
 {
     void *child[8];
-};
+} __attribute__ ((aligned(16)));
 
 // this needs to be cleaned up
 struct stack_item
@@ -165,7 +185,7 @@ static bool ray_aabb(distance3 origin, distance3 inv_dir,
 
     math::float3 tmin = std::min(top, bot);
     math::float3 tmax = std::max(top, bot);
-
+    
     near = std::max(std::max(tmin.x, tmin.y), tmin.z);
     distance far = std::min(std::min(tmax.x, tmax.y), tmax.z);
 
@@ -217,7 +237,7 @@ public:
         world_max = distance3(1, 1, 1);
 
 	    printf("Building SVO (this is done only once).\n");
-	    root = (SVONode*)build_SVO(svo_depth, distance3(-1, -1, -1), distance3(1, 1, 1));
+	    root = (Node*)build_SVO(svo_depth, distance3(-1, -1, -1), distance3(1, 1, 1));
 	    printf("SVO built (%d voxels, depth = %d).\n", voxel_count, svo_depth);
 	}
 	
@@ -249,7 +269,7 @@ private:
         // else LEAVE IT ALONE).
 
         return true; // return if and only if "nearest" was modified
-    }
+    } __attribute__ ((hot))
 
     // this is the heart of the voxel renderer, the SVO traversal code
     // this is where optimization efforts should be focused
@@ -311,7 +331,7 @@ private:
             }
             else
             {
-                SVONode *parent = (SVONode*)s.memptr;
+                Node *parent = (Node*)s.memptr;
                 stack_item children[4];
                 size_t hits = 0;
 
@@ -347,7 +367,7 @@ private:
             return voxel;
         }
         
-        SVONode *node = new SVONode();
+        Node *node = new Node();
         
         // build children here
         for (int t = 0; t < 8; ++t)
@@ -430,7 +450,7 @@ private:
             }
     }
     
-    SVONode *root;
+    Node *root;
 
     distance3 world_min, world_max;
 };

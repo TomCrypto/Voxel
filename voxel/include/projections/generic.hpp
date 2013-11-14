@@ -22,7 +22,7 @@
 
 static math::float3 camera_pos(0.1f, -0.4f, -0.4f);
 static math::float3 camera_dir(-0.1f, -0.2f, 1);
-static float fov = 100 * (M_PI / 180.0f);
+static float fov = 75 * (M_PI / 180.0f);
 
 // END HARDCODED //
 

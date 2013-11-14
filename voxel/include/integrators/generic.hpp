@@ -87,6 +87,13 @@ namespace integrators
 	        return math::float3(0, 0, 0);
 	    }
     }
+    
+    inline math::float3 saturate(const math::float3 &x)
+    {
+        return std::min(math::float3(1, 1, 1),
+               std::max(math::float3(0, 0, 0),
+               x));
+    }
 
     /** Implements simple direct lighting with a single point light source.
       * This will be refactored in the future once we have the lighting
@@ -114,7 +121,7 @@ namespace integrators
 	        
 	        if (geometry.occludes(hit, dir_to_light, distance_to_light))
             {
-                return ambient * contact.rgb; // light is occluded
+                return saturate(ambient * contact.rgb); // light is occluded
             }
 	        else
 	        {
@@ -122,7 +129,7 @@ namespace integrators
                 float falloff = pow(distance_to_light, 2) * 8.5f;
 	            float diffuse = std::max(0.0f, NdotL) / falloff;
 	            
-	            return (ambient + diffuse) * contact.rgb;
+	            return saturate((ambient + diffuse) * contact.rgb);
 	        }
 		
         }

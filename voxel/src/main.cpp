@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 	VoxelTest geometry;
 	X11Display disp(512, 512, "Voxel Engine");
 	
+	#if 0
 	auto t1 = Clock::now();
 	
     render(std::bind(integrators::direct<VoxelTest>, geometry, _1, _2),
@@ -66,6 +67,32 @@ int main(int argc, char *argv[])
 	
 	while (disp.draw(raster))
 		;
+
+    #else
+
+	std::cout << "!!! WARNING !!!" << std::endl;
+	std::cout << "The animation will take 100% of your CPU while it is running - "
+	             "please ensure your processor has adequate cooling hardware, or "
+	             "it may overheat." << std::endl << std::endl;
+	std::cout << "Press <ENTER> to begin..." << std::endl;
+	
+	std::cin.get();
+	
+	float time = 0;
+	
+	do
+	{
+	    camera_dir.x = sin(time * 1.1f) / 3.0f;
+	    camera_pos.z = cos(time * 1.0f) / 2.0f;
+	
+	    render(std::bind(integrators::direct<decltype(geometry)>, geometry, _1, _2),
+               std::bind(projections::perspective, _1, _2, _3, _4, _5),
+               std::bind(subsamplers::none, _1, _2, _3),
+               raster);
+               
+        time += 0.04f;
+	} while (disp.draw(raster));
+	#endif
 		
 	return EXIT_SUCCESS;
 }
