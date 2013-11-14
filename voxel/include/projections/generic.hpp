@@ -18,6 +18,14 @@
 #include "math/vector3.hpp"
 #include "math/matrix3x3.hpp"
 
+// HARDCODED (observer settings) //
+
+static math::float3 camera_pos(0.1f, -0.4f, -0.4f);
+static math::float3 camera_dir(-0.1f, -0.2f, 1);
+static float fov = 100 * (M_PI / 180.0f);
+
+// END HARDCODED //
+
 /** @namespace projections
   * 
   * @brief Namespace for the projections.
@@ -60,16 +68,6 @@ namespace projections
     bool perspective(float u, float v, float ratio,
                      math::float3 &origin, math::float3 &direction)
     {
-        // HARDCODED (observer settings) //
-
-        const float3 camera_pos(0, -0.4f, -0);
-
-        const float3 camera_dir(0.1, 0.2, 1); // or target, if it's easier
-
-        const float fov = 100 * (M_PI / 180.0f); // Field of View (in radians)
-
-        // END HARDCODED //
-        
         float3x3 view = basis(camera_dir);
 
         float3 camera_space(ratio * -u, -v, 1.0f / tan(fov / 2));
@@ -102,9 +100,10 @@ namespace projections
         float phi = M_PI * (0.5f - u);
         float theta = M_PI_2 * (1 + v); // voodoo magic
         
-        direction = spherical(phi, theta); // HARDCODED
-
-        origin = float3(0, -0.4f, 0); // HARDCODED
+        direction = spherical(phi, theta);
+        float3x3 view = basis(camera_dir);
+        direction  = view * direction;
+        origin = camera_pos;
 
         return true;
     }

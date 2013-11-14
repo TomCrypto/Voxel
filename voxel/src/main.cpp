@@ -23,9 +23,9 @@
 typedef std::chrono::high_resolution_clock Clock;
 typedef std::chrono::milliseconds milliseconds;
 
-void draw(const Raster &raster)
+void draw(const Raster &raster, const char *path)
 {
-	FILE *file = fopen("out.ppm", "w");
+	FILE *file = fopen(path, "w");
 
 	fprintf(file, "P3\n\n%d %d 255\n",
 	    (int)raster.width(),
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     
     std::cout << "Time to render: " << ms.count() << " ms." << std::endl;
 
-	draw(raster);
+	draw(raster, "out.ppm");
 	
 	while (disp.draw(raster))
 		;
