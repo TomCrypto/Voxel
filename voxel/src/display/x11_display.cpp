@@ -102,7 +102,7 @@ bool X11Display::draw(const Raster &raster)
 			// Message from window manager.
 			case ClientMessage:
 				// The close button on the window was pushed.
-				if( event.xclient.data.l[0] == wm_del )
+				if( event.xclient.data.l[0] == (long)wm_del )
 					return false;
 				break;
 		}

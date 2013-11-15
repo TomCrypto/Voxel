@@ -21,6 +21,9 @@
 #include <algorithm>
 #include <cmath>
 
+#include <cstdint>
+
+#include "math/common.hpp"
 #include "math/vector3.hpp"
 
 #include "contact.hpp"
@@ -46,6 +49,12 @@
 **/
 namespace integrators
 {
+    // later this will probably compute some kind of BRDF
+    math::float3 decode_material(uint16_t /*material*/)
+    {
+        return math::float3(0.25, 0.75, 0.25);
+    }
+
     /** Returns a flat color corresponding to the voxel color.
     **/
     template <typename Geometry>
@@ -58,7 +67,7 @@ namespace integrators
 
 	    if (geometry.intersects(origin, direction, distance, contact))
 	    {
-            return contact.rgb;
+            return decode_material(contact.material);
 	    }
 	    else
 	    {
@@ -80,7 +89,7 @@ namespace integrators
 	    if (geometry.intersects(origin, direction, distance, contact))
 	    {
             distance = std::max(0.0f, 1 - distance * 0.5f);
-            return contact.rgb * distance;
+            return decode_material(contact.material) * distance;
 	    }
 	    else
 	    {
@@ -109,9 +118,12 @@ namespace integrators
 
 	    if (geometry.intersects(origin, direction, distance, contact))
 	    {
+	        math::float3 rgb = decode_material(contact.material);
+	        math::float3 normal = decode_normal(contact.normal);
+	    
 	        // compute hit point (push back outside the object a little)
 	        math::float3 hit = origin + direction * distance
-                             + 1e-5f * contact.normal;
+                             + 1e-5f * normal;
 
 	        const float ambient = 0.25f;
 	        
@@ -121,15 +133,15 @@ namespace integrators
 	        
 	        if (geometry.occludes(hit, dir_to_light, distance_to_light))
             {
-                return saturate(ambient * contact.rgb); // light is occluded
+                return saturate(ambient * rgb); // light is occluded
             }
 	        else
 	        {
-                float NdotL = dot(contact.normal, dir_to_light);
+                float NdotL = dot(normal, dir_to_light);
                 float falloff = pow(distance_to_light, 2) * 8.5f;
 	            float diffuse = std::max(0.0f, NdotL) / falloff;
 	            
-	            return saturate((ambient + diffuse) * contact.rgb);
+	            return saturate((ambient + diffuse) * rgb);
 	        }
 		
         }

@@ -4,12 +4,18 @@
 
 // NEEDS TO BE CLEANED UP
 
+#include "material.hpp"
+
 #include "math/vector3.hpp"
 #include <cmath>
+
+#include <cstdint>
 
 #include <cstddef>
 
 #include <algorithm>
+
+#include "contact.hpp"
 
 ////////
 
@@ -20,29 +26,23 @@ typedef math::float3 distance3;
 
 struct Voxel
 {
-    math::float3 normal; // distance3?
-    math::float3 rgb; // that's a color
-};
-
-template <size_t index>
-static distance3 offset()
-{
-    return distance3((index >> 2) & 1,
-                     (index >> 1) & 1,
-                     (index >> 0) & 1);
-}
+    //math::float3 normal; // distance3?
+    //math::float3 rgb; // that's a color
+    uint16_t normal;
+    uint16_t material;
+} __attribute__((packed));
 
 // (this will probably remain in cache permanently)
-static distance3 offsets[8] = // epic performance hack
+static const distance3 offset[8] = // epic performance hack
 {
-    offset<0>(),
-    offset<1>(),
-    offset<2>(),
-    offset<3>(),
-    offset<4>(),
-    offset<5>(),
-    offset<6>(),
-    offset<7>(),
+    distance3(0, 0, 0),
+    distance3(0, 0, 1),
+    distance3(0, 1, 0),
+    distance3(0, 1, 1),
+    distance3(1, 0, 0),
+    distance3(1, 0, 1),
+    distance3(1, 1, 0),
+    distance3(1, 1, 1),
 };
 
 // this is also needed by the traversal code (no sense storing the
@@ -54,28 +54,8 @@ inline
 static void subdivide(distance3 min_node, distance3 max_node, int index,
                       distance3 &min_child, distance3 &max_child)
 {
-    /*distance3 extent = (max_node - min_node) / 2;
-    
-    distance3 origin = (max_node + min_node) / 2;
-    distance3 new_origin;
-    
-    new_origin.x = origin.x + extent.x * (index&4 ? .5f : -.5f);
-    new_origin.y = origin.y + extent.y * (index&2 ? .5f : -.5f);
-    new_origin.z = origin.z + extent.z * (index&1 ? .5f : -.5f);
-        
-    min_child = new_origin - extent * .5f;
-    max_child = new_origin + extent * .5f;*/
-    
-    // the vector code below is slow for some reason
-    
     distance3 extent = (max_node - min_node) * .5;
-    
-    // might be possible to hardware-accelerate this?
-    /*distance3 offset = distance3((index >> 2) & 1,
-                                 (index >> 1) & 1,
-                                 (index >> 0) & 1);*/
-    
-    min_child = min_node + extent * offsets[index];
+    min_child = min_node + extent * offset[index];
     max_child = min_child + extent;
 }
 
@@ -192,12 +172,14 @@ static bool ray_aabb(distance3 origin, distance3 inv_dir,
     return near < far && far > 0;
 }
 
+static distance3 light_pos = distance3(0.2f, -0.35f, 0.3f);
+
 class VoxelTest
 {
 public:
     distance3 light() const
     {
-        return distance3(0.2f, -0.3f, 0.3f);
+        return light_pos;
     }
     
     bool intersects(const distance3 &origin, const distance3 &direction,
@@ -260,7 +242,7 @@ private:
         (void)direction;
         
         Voxel *voxel = (Voxel*)item.memptr;
-        contact.rgb = voxel->rgb;
+        contact.material = voxel->material;
         contact.normal = voxel->normal;
         nearest = item.hit; // IMPORTANT: you must set "nearest" to the
         // nearest intersection within the voxel's bounding box, IF AND
@@ -335,7 +317,7 @@ private:
                 stack_item children[4];
                 size_t hits = 0;
 
-                for (size_t t = 0; t < 8; ++t)
+                for (size_t t = 0; t < 8 && hits != 4; ++t)
                 {
                     void *child = parent->child[t];
                     if (child == nullptr) continue;
@@ -439,13 +421,10 @@ private:
                 
                 if ((min.y <= height) && (height <= max.y))
                 {
-                    voxel->normal = normal(x, z);
+                    voxel->normal = encode_normal(normal(x, z));
+                    voxel->material = 0;
                     
-                    float r = std::min(std::max(0.0f, std::abs(x)), 1.0f);
-                    float g = std::min(std::max(0.0f, std::abs(z)), 1.0f);
-                    float b = std::min(std::max(0.0f, std::abs(x + z)), 1.0f);
-                    
-                    voxel->rgb = math::float3(r, g, b) + math::float3(0.25f, 0.25f, 0.25f);
+                    return;
                 }
             }
     }

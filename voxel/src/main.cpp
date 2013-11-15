@@ -4,10 +4,12 @@
 #include <vector>
 #include <functional>
 
+#include "math/common.hpp"
+
 #include "renderer.hpp"
 //#include "display.hpp"
 
-#include "geometry/cornell_box.hpp"
+//#include "geometry/cornell_box.hpp"
 #include "geometry/voxel_test.hpp"
 
 #include "integrators/generic.hpp"
@@ -41,7 +43,7 @@ void draw(const Raster &raster, const char *path)
 	fclose(file);
 }
 
-int main(int argc, char *argv[])
+int main(int /*argc*/, char */*argv*/[])
 {
 	using namespace std::placeholders;
 
@@ -84,13 +86,16 @@ int main(int argc, char *argv[])
 	{
 	    camera_dir.x = sin(time * 1.1f) / 3.0f;
 	    camera_pos.z = cos(time * 1.0f) / 2.0f;
+	    
+	    light_pos.x = cos(time) * 0.5f;
+	    light_pos.z = sin(time) * 0.5f;
 	
 	    render(std::bind(integrators::direct<decltype(geometry)>, geometry, _1, _2),
                std::bind(projections::perspective, _1, _2, _3, _4, _5),
                std::bind(subsamplers::none, _1, _2, _3),
                raster);
                
-        time += 0.04f;
+        time += 0.02f;
 	} while (disp.draw(raster));
 	#endif
 		
