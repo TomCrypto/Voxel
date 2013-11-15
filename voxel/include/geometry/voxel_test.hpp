@@ -32,7 +32,7 @@ struct Node
     uint32_t child[8];
 };
 
-#define svo_depth 14 // TEMPORARY (will not be hardcoded later)
+#define svo_depth 9 // TEMPORARY (will not be hardcoded later)
 
 #define STACK_SIZE (4 * svo_depth) // can probably bring this down with some mathematical analysis of worst-case SVO traversal
                                    // (until we figure out how stackless traversal works, anyway)
