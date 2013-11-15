@@ -102,6 +102,14 @@ namespace math
                                  a.z / b.z,
                                  a.w / b.w);
         }
+        
+        friend basic_vector4 operator -(const basic_vector4 &a)
+        {
+            return basic_vector4(-a.x,
+                                 -a.y,
+                                 -a.z,
+                                 -a.w);
+        }
 
 	    basic_vector4 &operator =(const basic_vector4 &b)
 	    {
@@ -316,6 +324,11 @@ namespace math
                                         const basic_vector4 &b)
 	    {
             return _mm_div_ps(a.sse, b.sse);
+        }
+        
+        friend basic_vector4 operator -(const basic_vector4 &a)
+        {
+            return _mm_sub_ps(_mm_set_ps(0, 0, 0, 0), a.sse);
         }
 
 	    basic_vector4 &operator =(const basic_vector4 &b)
