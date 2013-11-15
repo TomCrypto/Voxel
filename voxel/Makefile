@@ -16,7 +16,7 @@ ANALYSIS_DIR = analysis
 
 CXX ?= clang++
 CXXFLAGS = -O3 -march=native -std=c++11 \
-           -Wall -Wextra -Werror \
+           -Wall -Wextra \
            -fopenmp
 
 LDFLAGS = -lX11 -lGL -lGLU -fopenmp
