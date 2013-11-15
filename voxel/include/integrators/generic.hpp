@@ -50,9 +50,20 @@
 namespace integrators
 {
     // later this will probably compute some kind of BRDF
-    math::float3 decode_material(uint16_t /*material*/)
+    math::float3 decode_material(uint16_t material)
     {
-        return math::float3(0.25, 0.75, 0.25);
+        switch (material)
+        {
+            case 0: return math::float3(0.25, 0.75, 0.25);
+            case 1: return math::float3(0.55, 0.75, 0.55);
+            case 2: return math::float3(1, 1, 1);
+            case 3: return math::float3(0.25, 0.25, 0.75);
+            case 4: return math::float3(0.75, 0.25, 0.25);
+            case 5: return math::float3(0.75, 0.75, 0.25);
+            case 6: return math::float3(0.25, 0.75, 0.75);
+        }
+        
+        return math::float3(0, 0, 0);
     }
 
     /** Returns a flat color corresponding to the voxel color.

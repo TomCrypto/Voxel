@@ -2,8 +2,6 @@
 
 /* Voxel test with procedural data. */
 
-// NEEDS TO BE CLEANED UP
-
 #include "material.hpp"
 
 #include "math/vector3.hpp"
@@ -17,160 +15,27 @@
 
 #include "contact.hpp"
 
-////////
+#include "geometry/voxel_types.hpp"
 
-typedef float distance;
-typedef math::float3 distance3;
+#include "geometry/fast_stack.hpp"
 
-////////
+#include "geometry/aabb.hpp"
 
 struct Voxel
 {
-    //math::float3 normal; // distance3?
-    //math::float3 rgb; // that's a color
     uint16_t normal;
     uint16_t material;
-} __attribute__((packed));
-
-// (this will probably remain in cache permanently)
-static const distance3 offset[8] = // epic performance hack
-{
-    distance3(0, 0, 0),
-    distance3(0, 0, 1),
-    distance3(0, 1, 0),
-    distance3(0, 1, 1),
-    distance3(1, 0, 0),
-    distance3(1, 0, 1),
-    distance3(1, 1, 0),
-    distance3(1, 1, 1),
 };
-
-// this is also needed by the traversal code (no sense storing the
-// bounding box of each voxel when it can be readily inferred from
-// its location in the octree datastructure)
-
-// to optimize
-inline
-static void subdivide(distance3 min_node, distance3 max_node, int index,
-                      distance3 &min_child, distance3 &max_child)
-{
-    distance3 extent = (max_node - min_node) * .5;
-    min_child = min_node + extent * offset[index];
-    max_child = min_child + extent;
-}
 
 struct Node
 {
-    void *child[8];
-} __attribute__ ((aligned(16)));
-
-// this needs to be cleaned up
-struct stack_item
-{
-    void *memptr;
-    size_t depth;
-
-    distance3 min, max; // bounding box for this node
-    distance hit; // nearest intersection for this node
-
-    stack_item()
-    {
-        hit = std::numeric_limits<distance>::infinity();
-    }
-
-    stack_item &operator =(const stack_item &record)
-    {
-        this->memptr = record.memptr;
-        this->depth = record.depth;
-        this->min = record.min;
-        this->max = record.max;
-        this->hit = record.hit;
-
-        return *this;
-    }
-
-    stack_item(void *memptr, size_t depth, distance3 min, 
-                 distance3 max)
-    {
-        this->memptr = memptr;
-        this->depth = depth;
-        this->min = min;
-        this->max = max;
-        this->hit = 0;
-    }
-
-    stack_item(void *memptr, size_t depth, distance3 min, distance3 max,
-                 distance near)
-    {
-        this->memptr = memptr;
-        this->depth = depth;
-        this->min = min;
-        this->max = max;
-        this->hit = near;
-    }
-
-    // this should derive a stack_item from its parent
-    stack_item(void *memptr, const stack_item &parent, size_t index)
-    {
-        this->memptr = memptr;
-        this->depth = parent.depth - 1;
-        this->hit = 0;
-
-        subdivide(parent.min, parent.max, index,
-                  this->min, this->max);
-    }
+    uint32_t child[8];
 };
-
-static inline stack_item pop(const stack_item *stack, size_t &ptr)
-{
-    return stack[--ptr];
-}
-
-static inline void push(stack_item *stack, size_t &ptr, const stack_item &item)
-{
-    stack[ptr++] = item;
-}
-
-static inline void swap(stack_item *a, stack_item *b)
-{
-    if (a->hit > b->hit)
-    {
-        stack_item tmp = *a;
-        *a = *b;
-        *b = tmp;
-    }
-}
-
-static inline void sort_network(stack_item *list)
-{
-    swap(&list[0], &list[2]);
-    swap(&list[1], &list[3]);
-    swap(&list[0], &list[1]);
-    swap(&list[2], &list[3]);
-    swap(&list[1], &list[2]);
-}
 
 #define svo_depth 9 // TEMPORARY (will not be hardcoded later)
 
-static int voxel_count = 0;
-
-// to optimize
-inline
-static bool ray_aabb(distance3 origin, distance3 inv_dir,
-                     distance3 bmin, distance3 bmax,
-                     distance &near)
-{
-    distance3 bot = (bmin - origin) * inv_dir;
-    distance3 top = (bmax - origin) * inv_dir;
-
-    math::float3 tmin = std::min(top, bot);
-    math::float3 tmax = std::max(top, bot);
-    
-    near = std::max(std::max(tmin.x, tmin.y), tmin.z);
-    distance far = std::min(std::min(tmax.x, tmax.y), tmax.z);
-
-    return near < far && far > 0;
-}
+#define STACK_SIZE (4 * svo_depth) // can probably bring this down with some mathematical analysis of worst-case SVO traversal
+                                   // (until we figure out how stackless traversal works, anyway)
 
 static distance3 light_pos = distance3(0.2f, -0.35f, 0.3f);
 
@@ -215,15 +80,17 @@ public:
 	
 	VoxelTest()
 	{
-        world_min = distance3(-1, -1, -1);
-        world_max = distance3(1, 1, 1);
-
 	    printf("Building SVO (this is done only once).\n");
-	    root = (Node*)build_SVO(svo_depth, distance3(-1, -1, -1), distance3(1, 1, 1));
-	    printf("SVO built (%d voxels, depth = %d).\n", voxel_count, svo_depth);
+	    init_mem();
+	    bool tmp;
+	    root = (Node*)build_SVO(svo_depth, world, tmp);
+	    printf("SVO built (%zu voxels, %zu nodes, depth = %d).\n",
+	           voxel_offset, node_offset, svo_depth);
 	}
 	
 private:
+    const aabb world = aabb{distance3(-1, -1, -1), distance3(1, 1, 1)};
+
     // looks up a voxel through its memory address (this could be an offset later on
     // for virtualization) and fills in an appropriate Contact structure to indicate
     // the material and surface normal, when applicable
@@ -241,9 +108,9 @@ private:
         (void)origin;
         (void)direction;
         
-        Voxel *voxel = (Voxel*)item.memptr;
-        contact.material = voxel->material;
-        contact.normal = voxel->normal;
+        Voxel voxel = voxels[item.offset];
+        contact.material = voxel.material;
+        contact.normal = voxel.normal;
         nearest = item.hit; // IMPORTANT: you must set "nearest" to the
         // nearest intersection within the voxel's bounding box, IF AND
         // ONLY IF this intersection is closer than the currently recorded
@@ -259,15 +126,15 @@ private:
     // DONE: convert to iteration and use a stack
     // TODO: implement and benchmark stackless traversal algorithms
     // DONE: uses early rejection by sorting children
-    // TODO: fix remaining bugs
+    // DONE: fix remaining bugs
 
     // CURRENT REASONS FOR BEING SLOW:
     // 1. no SSE vector instructions  [WIP]
     // 2. unnecessary ray_aabb call in leaf [fixed]
     // 3. recursion [fixed]
     // 4. "intersections" buffer not optimized [fixed]
-    // 5. tree nodes allocated via malloc(), poor locality [?]
-    // 6. ray_aabb is not optimized at all  [WIP]
+    // 5. tree nodes allocated via malloc(), poor locality [fixed]
+    // 6. ray_aabb is not optimized at all  [fixed]
     // 7. possible algorithmic improvements?
 
     // QUESTIONS TO RESOLVE:
@@ -292,43 +159,43 @@ private:
                   const distance   &range,       distance    &nearest,
                         Contact  &contact, const bool       occlusion) const
     {
-        const distance3 &inv_dir = 1 / direction;
-        stack_item stack[4 * svo_depth];
-        size_t ptr = 0;
+        const distance3 &invdir = 1 / direction;
+        traversal_stack<STACK_SIZE> stack;
 
         bool hit = false;
         nearest = range;
 
-        push(stack, ptr, stack_item(root, svo_depth, world_min, world_max));
+        // root probably always has offset 0 (check later)
+        stack.push(stack_item(0, world));
 
-        while (ptr)
+        while (!stack.empty())
         {
-            stack_item s = pop(stack, ptr);
-            if (s.hit >= nearest) continue;
-
-            if (!s.depth)
+            auto s = stack.pop();
+            if (s.hit < nearest)
             {
-                hit = lookup(origin, direction, s, nearest, contact);
-                if (occlusion && hit) return true; /* We are done. */
-            }
-            else
-            {
-                Node *parent = (Node*)s.memptr;
-                stack_item children[4];
-                size_t hits = 0;
-
-                for (size_t t = 0; t < 8 && hits != 4; ++t)
+                if (s.offset & 0x80000000)
                 {
-                    void *child = parent->child[t];
-                    if (child == nullptr) continue;
-
-                    stack_item c(child, s, t); /* Child subdivision. */
-                    if (ray_aabb(origin, inv_dir, c.min, c.max, c.hit))
-                        if (c.hit < nearest) push(children, hits, c);
+                    s.offset ^= 0x80000000; /* Decode this leaf offset. */
+                    hit |= lookup(origin, direction, s, nearest, contact);
+                    if (occlusion && hit) return true; /* Voxel is hit. */
                 }
-
-                sort_network(children); /* Pushed front to back. */
-                while (hits) push(stack, ptr, pop(children, hits));
+                else
+                {
+                    size_t last = stack.position();
+                    auto current = nodes[s.offset];
+                    for (size_t t = 0; t < 8; ++t)
+                    {
+                        uint32_t child = current.child[t];
+                        if (child == 0x00000000) continue;
+                        auto node = s.subdivide(child, t);
+                        
+                        if (intersect(origin, invdir, node.cube, node.hit))
+                            if (node.hit < nearest) stack.push(node);
+                    }
+                    
+                    /* Push back to front. */
+                    stack.special_sort(last);
+                }
             }
         }
 
@@ -337,30 +204,43 @@ private:
 
     // this will be done in a separate program later on (SVO's will be
     // loaded on the fly, no time to build them while streaming voxels)
-    void *build_SVO(int depth, distance3 min_node, distance3 max_node)
+    void *build_SVO(int depth, const aabb &cube, bool &leaf)
     {
         if (depth == 0)
         {
-            ++voxel_count;
-        
             // this is a leaf - add voxel
-            Voxel *voxel = new Voxel();
-            get_voxel_data(min_node, max_node, voxel);
+            Voxel *voxel = alloc_voxel();
+            get_voxel_data(cube, voxel);
+            leaf = true;
             return voxel;
         }
         
-        Node *node = new Node();
+        Node *node = alloc_node();
         
         // build children here
         for (int t = 0; t < 8; ++t)
         {
-            distance3 min_child, max_child;
-            subdivide(min_node, max_node, t, min_child, max_child);
+            aabb child = split_node(cube, t);
             
-            if (!contains_voxels(min_child, max_child)) node->child[t] = nullptr;
-            else node->child[t] = build_SVO(depth - 1, min_child, max_child);
+            if (!contains_voxels(child)) node->child[t] = 0;
+            else
+            {
+                bool leaf;
+                
+                void *ptr = build_SVO(depth - 1, child, leaf);
+                
+                if (leaf)
+                {
+                    node->child[t] = uint32_t((Voxel*)ptr - voxels) ^ 0x80000000; // add leaf marker here (IMPORTANT)
+                }
+                else
+                {
+                    node->child[t] = uint32_t((Node*)ptr - nodes);
+                }
+            }
         }
         
+        leaf = false;
         return node;
     }
     
@@ -388,25 +268,25 @@ private:
         return normalize(distance3(dx, 1, dz));
     }
     
-    bool contains_voxels(distance3 min, distance3 max) const // TEMPORARY
+    bool contains_voxels(const aabb &node) const // TEMPORARY
     {
         int r = 10;
         
         for (int px = 0; px < r; ++px)
             for (int pz = 0; pz < r; ++pz)
             {
-                distance x = min.x + (max.x - min.x) * (distance)px / r;
-                distance z = min.z + (max.z - min.z) * (distance)pz / r;
+                distance x = node.min.x + (node.max.x - node.min.x) * (distance)px / r;
+                distance z = node.min.z + (node.max.z - node.min.z) * (distance)pz / r;
                 
                 distance height = heightmap(x, z);
                 
-                if ((min.y <= height) && (height <= max.y)) return true;
+                if ((node.min.y <= height) && (height <= node.max.y)) return true;
             }
         
         return false;
     }
     
-    void get_voxel_data(distance3 min, distance3 max, Voxel *voxel) const
+    void get_voxel_data(const aabb &node, Voxel *voxel) const
         // TEMPORARY
     {
         int r = 10;
@@ -414,12 +294,12 @@ private:
         for (int px = 0; px < r; ++px)
             for (int pz = 0; pz < r; ++pz)
             {
-                distance x = min.x + (max.x - min.x) * (distance)px / r;
-                distance z = min.z + (max.z - min.z) * (distance)pz / r;
+                distance x = node.min.x + (node.max.x - node.min.x) * (distance)px / r;
+                distance z = node.min.z + (node.max.z - node.min.z) * (distance)pz / r;
                 
                 distance height = heightmap(x, z);
                 
-                if ((min.y <= height) && (height <= max.y))
+                if ((node.min.y <= height) && (height <= node.max.y))
                 {
                     voxel->normal = encode_normal(normal(x, z));
                     voxel->material = 0;
@@ -429,7 +309,35 @@ private:
             }
     }
     
+    // pray your libc overcommits :)
+    #define NODE_MEMORY (1024 * 1024 * 1024)
+    #define VOXEL_MEMORY (1024 * 1024 * 1024)
+    
+    Node *nodes;
+    Voxel *voxels;
+    size_t node_offset, voxel_offset;
+    
+    void init_mem()
+    {
+        nodes = (Node*)malloc(NODE_MEMORY);
+        voxels = (Voxel*)malloc(VOXEL_MEMORY);
+        node_offset = 0;
+        voxel_offset = 0;
+    }
+    
+    Node *alloc_node()
+    {
+        Node *ptr = nodes + node_offset;
+        node_offset++;
+        return ptr;
+    }
+    
+    Voxel *alloc_voxel()
+    {
+        Voxel *ptr = voxels + voxel_offset;
+        voxel_offset++;
+        return ptr;
+    }
+    
     Node *root;
-
-    distance3 world_min, world_max;
 };

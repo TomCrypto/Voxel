@@ -77,24 +77,24 @@ public:
 	        {
 	            switch (index)
 	            {
-	                case 0: contact.rgb = math::float3(0.55, 0.75, 0.55); break;
-	                case 1: contact.rgb = math::float3(1, 1, 1); break;
-	                case 2: contact.rgb = math::float3(0.25, 0.25, 0.75); break;
-	                case 3: contact.rgb = math::float3(0.75, 0.25, 0.25); break;
-	                case 4: contact.rgb = math::float3(1, 1, 1); break;
+	                case 0: contact.material = 1; break;
+	                case 1: contact.material = 2; break;
+	                case 2: contact.material = 3; break;
+	                case 3: contact.material = 4; break;
+	                case 4: contact.material = 2; break;
 	            }
 	            
-	            contact.normal = planes[index].normal;
+	            contact.normal = encode_normal(planes[index].normal);
 	        }
 	        else
 	        {
 	            switch (index)
 	            {
-	                case 0: contact.rgb = math::float3(0.75, 0.75, 0.25); break;
-	                case 1: contact.rgb = math::float3(0.25, 0.75, 0.75); break;
+	                case 0: contact.material = 5; break;
+	                case 1: contact.material = 6; break;
 	            }
 	            
-	            contact.normal = normalize(origin + direction * distance - spheres[index].center);
+	            contact.normal = encode_normal(normalize(origin + direction * distance - spheres[index].center));
 	        }
 	        
 	        return true;

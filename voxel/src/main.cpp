@@ -6,10 +6,12 @@
 
 #include "math/common.hpp"
 
+#include "contact.hpp"
+
 #include "renderer.hpp"
 //#include "display.hpp"
 
-//#include "geometry/cornell_box.hpp"
+#include "geometry/cornell_box.hpp"
 #include "geometry/voxel_test.hpp"
 
 #include "integrators/generic.hpp"
@@ -46,6 +48,8 @@ void draw(const Raster &raster, const char *path)
 int main(int /*argc*/, char */*argv*/[])
 {
 	using namespace std::placeholders;
+	
+	build_table();
 
 	Raster raster(512, 512);
 	VoxelTest geometry;
@@ -81,6 +85,11 @@ int main(int /*argc*/, char */*argv*/[])
 	std::cin.get();
 	
 	float time = 0;
+	int frames = 0;
+	
+	const int MAX_FRAMES = 500;
+	
+	auto t1 = Clock::now();
 	
 	do
 	{
@@ -94,9 +103,17 @@ int main(int /*argc*/, char */*argv*/[])
                std::bind(projections::perspective, _1, _2, _3, _4, _5),
                std::bind(subsamplers::none, _1, _2, _3),
                raster);
-               
+        
+        auto t2 = Clock::now();
+    
+        milliseconds ms = std::chrono::duration_cast<milliseconds>(t2 - t1);
+        float elapsed_seconds = ms.count() / 1000.0f;
+        
+        frames++;
         time += 0.02f;
-	} while (disp.draw(raster));
+        
+        std::cout << "FPS: " << frames / elapsed_seconds << std::endl;
+	} while (disp.draw(raster) && (frames < MAX_FRAMES));
 	#endif
 		
 	return EXIT_SUCCESS;
