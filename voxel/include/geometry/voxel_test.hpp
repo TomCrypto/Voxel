@@ -109,7 +109,7 @@ private:
     // the material and surface normal, when applicable
     
     // this function has some pretty strong invariants to maintain, pay attention.
-    // (read: if the invariants are not maintained, traversal with FAIL horribly)
+    // (read: if the invariants are not maintained, traversal will FAIL horribly)
     
     // (procedural data generation can happen here as well)
     inline
