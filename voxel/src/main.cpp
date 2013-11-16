@@ -4,9 +4,9 @@
 #include <vector>
 #include <functional>
 
-#include "math/common.hpp"
+#include "contact.hpp" // for build_table()
 
-#include "contact.hpp"
+#include "observer.hpp"
 
 #include "renderer.hpp"
 //#include "display.hpp"
@@ -20,7 +20,7 @@
 
 #include "display/x11_display.hpp"
 
-#include "compile_settings.hpp"
+//#include "compile_settings.hpp" // no need for this for now
 
 #include <chrono>
 
@@ -47,19 +47,24 @@ void draw(const Raster &raster, const char *path)
 
 int main(int /*argc*/, char */*argv*/[])
 {
-	using namespace std::placeholders;
-	
-	build_table();
+	build_table(); // for the 16-bit normals
 
 	Raster raster(512, 512);
 	VoxelTest geometry;
 	X11Display disp(512, 512, "Voxel Engine");
 	
+	// configure the observer (will be done elsewhere later)
+	
+	Observer observer;
+	observer.position = math::float3(0.1f, -0.4f, -0.4f);
+	observer.direction = math::float3(-0.1f, -0.2f, 1);
+	observer.fov = 75 * (M_PI / 180.0f);
+	
 	#if 0
 	auto t1 = Clock::now();
 	
-    render(std::bind(integrators::direct<VoxelTest>, geometry, _1, _2),
-           std::bind(projections::perspective, _1, _2, _3, _4, _5),
+    render(std::bind(integrators::direct<decltype(geometry)>, geometry, _1, _2),
+           std::bind(projections::perspective, observer, _1, _2, _3, _4, _5),
            std::bind(subsamplers::none, _1, _2, _3),
            raster);
 	
@@ -93,14 +98,17 @@ int main(int /*argc*/, char */*argv*/[])
 	
 	do
 	{
-	    camera_dir.x = sin(time * 1.1f) / 3.0f;
-	    camera_pos.z = cos(time * 1.0f) / 2.0f;
+	    observer.direction.x = sin(time * 1.1f) / 3.0f;
+	    observer.position.z = cos(time * 1.0f) / 2.0f;
 	    
-	    light_pos.x = cos(time) * 0.5f;
+	    light_pos.x = cos(time) * 0.5f; // hack to get some moving light sources
 	    light_pos.z = sin(time) * 0.5f;
+	    
+	    using namespace std::placeholders;
 	
+	    // note that rendering is entirely read-only -> no synchronization needed
 	    render(std::bind(integrators::direct<decltype(geometry)>, geometry, _1, _2),
-               std::bind(projections::perspective, _1, _2, _3, _4, _5),
+               std::bind(projections::perspective, observer, _1, _2, _3, _4, _5),
                std::bind(subsamplers::none, _1, _2, _3),
                raster);
         

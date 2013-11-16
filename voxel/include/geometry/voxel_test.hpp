@@ -299,7 +299,7 @@ private:
                 if ((node.min.y <= height) && (height <= node.max.y))
                 {
                     normal = encode_normal(get_normal(x, z));
-                    material = (x < 0) ? 0 : 1;
+                    material = 0;
                     
                     return;
                 }

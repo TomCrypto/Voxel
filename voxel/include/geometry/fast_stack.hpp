@@ -113,8 +113,9 @@ struct traversal_stack
         **/
         stack_item pop()
         {
-            // We may have a problem here regarding the value of "hit"
-            // investigate if any bug occurs (it's possible it cannot)
+            /** @todo We may have a problem here regarding the value of "hit",
+              * investigate whether any bug occurs (it's possible it cannot)
+            **/
             assert(pointer != 0);
             return stack[--pointer];
         }
@@ -155,7 +156,7 @@ struct traversal_stack
           * @param last  Index of the first element to sort.
           *
           * @remarks After this function returns, stack elements from \c last,
-          *          to \c last \c + \c 4, will be sorted in descending order.
+          *          to \c last \c + \c 3, will be sorted in descending order.
         **/
         void special_sort(size_t last)
         {
