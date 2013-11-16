@@ -21,21 +21,35 @@
 
 #include "geometry/aabb.hpp"
 
-struct Voxel
-{
-    uint16_t normal;
-    uint16_t material;
-};
+// the encoding currently used for voxels imposes a maximum of 2 billion nodes
+// but it may make sense to use uint64_t and use the extra 32 bits in the leaf
+// nodes for fast-changing material properties (or other)
+// (we'd need to know how many voxels constitute a typical world with LOD, and
+//  see if double the memory usage is worth a richer & faster material system)
 
 struct Node
 {
     uint32_t child[8];
 };
 
+uint32_t encode_leaf(const uint16_t &normal, const uint16_t &material)
+{
+    return (((material & 0x7FFF) << 16) | normal) | 0x80000000;
+}
+
+// assumes the high bit marker has already been removed
+void decode_leaf(const uint32_t &leaf, uint16_t &normal, uint16_t &material)
+{
+    material = leaf >> 16;
+    normal = leaf & 0xFFFF;
+}
+
 #define svo_depth 9 // TEMPORARY (will not be hardcoded later)
 
 #define STACK_SIZE (4 * svo_depth) // can probably bring this down with some mathematical analysis of worst-case SVO traversal
                                    // (until we figure out how stackless traversal works, anyway)
+                                   // (it doesn't really matter on the CPU due to how the stack works, but will be a killer on
+                                   // the GPU as it will increase register pressure and kill parallelism ---> need stackless)
 
 static distance3 light_pos = distance3(0.2f, -0.35f, 0.3f);
 
@@ -82,10 +96,9 @@ public:
 	{
 	    printf("Building SVO (this is done only once).\n");
 	    init_mem();
-	    bool tmp;
-	    root = (Node*)build_SVO(svo_depth, world, tmp);
-	    printf("SVO built (%zu voxels, %zu nodes, depth = %d).\n",
-	           voxel_offset, node_offset, svo_depth);
+	    root = build_SVO(svo_depth, world);
+	    printf("SVO built (%zu nodes, depth = %d).\n",
+	           node_offset, svo_depth);
 	}
 	
 private:
@@ -96,11 +109,12 @@ private:
     // the material and surface normal, when applicable
     
     // this function has some pretty strong invariants to maintain, pay attention.
+    // (read: if the invariants are not maintained, traversal with FAIL horribly)
     
     // (procedural data generation can happen here as well)
     inline
     bool lookup(const  distance3 &origin, const distance3 &direction,
-                const stack_item   &item,       distance    &nearest,
+                const stack_item   &leaf,       distance    &nearest,
                                                     Contact &contact) const
     {
         // default implementation, voxels are cubic and solid
@@ -108,10 +122,9 @@ private:
         (void)origin;
         (void)direction;
         
-        Voxel voxel = voxels[item.offset];
-        contact.material = voxel.material;
-        contact.normal = voxel.normal;
-        nearest = item.hit; // IMPORTANT: you must set "nearest" to the
+        decode_leaf(leaf.offset, contact.normal, contact.material);
+        
+        nearest = leaf.hit; // IMPORTANT: you must set "nearest" to the
         // nearest intersection within the voxel's bounding box, IF AND
         // ONLY IF this intersection is closer than the currently recorded
         // "nearest" value (and if this is the case, populate "contact",
@@ -159,14 +172,11 @@ private:
                   const distance   &range,       distance    &nearest,
                         Contact  &contact, const bool       occlusion) const
     {
+        traversal_stack<STACK_SIZE> stack(root, world);
         const distance3 &invdir = 1 / direction;
-        traversal_stack<STACK_SIZE> stack;
 
         bool hit = false;
         nearest = range;
-
-        // root probably always has offset 0 (check later)
-        stack.push(stack_item(0, world));
 
         while (!stack.empty())
         {
@@ -204,15 +214,17 @@ private:
 
     // this will be done in a separate program later on (SVO's will be
     // loaded on the fly, no time to build them while streaming voxels)
-    void *build_SVO(int depth, const aabb &cube, bool &leaf)
+    uint32_t build_SVO(int depth, const aabb &cube)
     {
         if (depth == 0)
         {
             // this is a leaf - add voxel
-            Voxel *voxel = alloc_voxel();
-            get_voxel_data(cube, voxel);
-            leaf = true;
-            return voxel;
+            
+            uint16_t normal, material;
+            get_voxel_data(cube, normal, material);
+            
+            // encode leaf data into 32-bit offset
+            return encode_leaf(normal, material);
         }
         
         Node *node = alloc_node();
@@ -223,25 +235,10 @@ private:
             aabb child = split_node(cube, t);
             
             if (!contains_voxels(child)) node->child[t] = 0;
-            else
-            {
-                bool leaf;
-                
-                void *ptr = build_SVO(depth - 1, child, leaf);
-                
-                if (leaf)
-                {
-                    node->child[t] = uint32_t((Voxel*)ptr - voxels) ^ 0x80000000; // add leaf marker here (IMPORTANT)
-                }
-                else
-                {
-                    node->child[t] = uint32_t((Node*)ptr - nodes);
-                }
-            }
+            else node->child[t] = build_SVO(depth - 1, child);
         }
         
-        leaf = false;
-        return node;
+        return (uint32_t)(node - nodes);
     }
     
     float heightmap(distance x, distance z) const // TEMPORARY
@@ -257,7 +254,7 @@ private:
         //return -2.0f/3.0f + 0.2f * x * x;
     }
     
-    math::float3 normal(distance x, distance z) const // TEMPORARY
+    math::float3 get_normal(distance x, distance z) const // TEMPORARY
     {
         distance dx = 0.2 * cos(10 * x + 1);
         distance dz = 0.3 * cos(15 * z);
@@ -286,7 +283,7 @@ private:
         return false;
     }
     
-    void get_voxel_data(const aabb &node, Voxel *voxel) const
+    void get_voxel_data(const aabb &node, uint16_t &normal, uint16_t &material) const
         // TEMPORARY
     {
         int r = 10;
@@ -301,8 +298,8 @@ private:
                 
                 if ((node.min.y <= height) && (height <= node.max.y))
                 {
-                    voxel->normal = encode_normal(normal(x, z));
-                    voxel->material = 0;
+                    normal = encode_normal(get_normal(x, z));
+                    material = (x < 0) ? 0 : 1;
                     
                     return;
                 }
@@ -310,19 +307,15 @@ private:
     }
     
     // pray your libc overcommits :)
-    #define NODE_MEMORY (1024 * 1024 * 350)
-    #define VOXEL_MEMORY (1024 * 1024 * 1024)
+    #define NODE_MEMORY (1024 * 1024 * 1024)
     
     Node *nodes;
-    Voxel *voxels;
-    size_t node_offset, voxel_offset;
+    size_t node_offset;
     
     void init_mem()
     {
         nodes = (Node*)malloc(NODE_MEMORY);
-        voxels = (Voxel*)malloc(VOXEL_MEMORY);
         node_offset = 0;
-        voxel_offset = 0;
     }
     
     Node *alloc_node()
@@ -332,12 +325,5 @@ private:
         return ptr;
     }
     
-    Voxel *alloc_voxel()
-    {
-        Voxel *ptr = voxels + voxel_offset;
-        voxel_offset++;
-        return ptr;
-    }
-    
-    Node *root;
+    uint32_t root;
 };

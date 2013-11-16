@@ -86,6 +86,18 @@ template <size_t capacity>
 struct traversal_stack
 {
     public:
+        /** Constructs a new stack and initializes it with a stack item.
+          *
+          * @remarks This is typically used for pushing the root node.
+          * 
+          * @param offset  Offset for the first stack item.
+          * @param cube    Bounding box for the stack item.
+        **/
+        traversal_stack(const uint32_t &offset, const aabb &cube)
+        {
+            push(stack_item(offset, cube));
+        }
+    
         /** Gets the current position of the last element of the stack.
           *
           * @return The current number of elements in the stack.
