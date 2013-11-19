@@ -27,6 +27,24 @@
 // (we'd need to know how many voxels constitute a typical world with LOD, and
 //  see if double the memory usage is worth a richer & faster material system)
 
+static const math::basic_vector3<int> offset_int[8] =
+    {
+        math::basic_vector3<int>(0, 0, 0),
+        math::basic_vector3<int>(0, 0, 1),
+        math::basic_vector3<int>(0, 1, 0),
+        math::basic_vector3<int>(0, 1, 1),
+        math::basic_vector3<int>(1, 0, 0),
+        math::basic_vector3<int>(1, 0, 1),
+        math::basic_vector3<int>(1, 1, 0),
+        math::basic_vector3<int>(1, 1, 1),
+    };
+
+struct Voxel // for building only
+{
+    uint16_t material;
+    uint16_t normal;
+};
+
 struct Node
 {
     uint32_t child[8];
@@ -44,7 +62,9 @@ void decode_leaf(const uint32_t &leaf, uint16_t &normal, uint16_t &material)
     normal = leaf & 0xFFFF;
 }
 
-#define svo_depth 9 // TEMPORARY (will not be hardcoded later)
+#define RESOLUTION 256
+
+#define svo_depth 7 // TEMPORARY (will not be hardcoded later)
 
 #define STACK_SIZE (4 * svo_depth) // can probably bring this down with some mathematical analysis of worst-case SVO traversal
                                    // (until we figure out how stackless traversal works, anyway)
@@ -96,9 +116,10 @@ public:
 	{
 	    printf("Building SVO (this is done only once).\n");
 	    init_mem();
-	    root = build_SVO(svo_depth, world);
+	    root = build_SVO(svo_depth, world, math::basic_vector3<int>(0, 0, 0), math::basic_vector3<int>(RESOLUTION - 1, RESOLUTION - 1, RESOLUTION - 1));
 	    printf("SVO built (%zu nodes, depth = %d).\n",
 	           node_offset, svo_depth);
+	    free_mem();
 	}
 	
 private:
@@ -211,17 +232,26 @@ private:
 
         return hit;
 	} __attribute__ ((hot))
+	
+	void split_int(const math::basic_vector3<int> &min, const math::basic_vector3<int> &max, int t,
+	               math::basic_vector3<int> &child_min, math::basic_vector3<int> &child_max)
+	{
+	    math::basic_vector3<int> extent = (max - min) / 2;
+        math::basic_vector3<int> p = min + extent * offset_int[t];
+        child_min = p;
+        child_max = p + extent;
+	}
 
     // this will be done in a separate program later on (SVO's will be
     // loaded on the fly, no time to build them while streaming voxels)
-    uint32_t build_SVO(int depth, const aabb &cube)
+    uint32_t build_SVO(int depth, const aabb &cube, const math::basic_vector3<int> &min, const math::basic_vector3<int> &max)
     {
         if (depth == 0)
         {
             // this is a leaf - add voxel
             
             uint16_t normal, material;
-            get_voxel_data(cube, normal, material);
+            get_voxel_data(min, max, normal, material);
             
             // encode leaf data into 32-bit offset
             return encode_leaf(normal, material);
@@ -234,8 +264,11 @@ private:
         {
             aabb child = split_node(cube, t);
             
-            if (!contains_voxels(child)) node->child[t] = 0;
-            else node->child[t] = build_SVO(depth - 1, child);
+            math::basic_vector3<int> child_min, child_max;
+            split_int(min, max, t, child_min, child_max);
+            
+            if (!contains_voxels(child_min, child_max)) node->child[t] = 0;
+            else node->child[t] = build_SVO(depth - 1, child, child_min, child_max);
         }
         
         return (uint32_t)(node - nodes);
@@ -245,8 +278,8 @@ private:
     {
         //return 0.05f * (sin(x) + cos(z)) - 0.7f;
         
-        if ((x <= -0.525f) || (x >= 0.6f)) return std::numeric_limits<distance>::infinity();
-        if ((z <= 0.2f)) return std::numeric_limits<distance>::infinity();
+        //if ((x <= -0.525f) || (x >= 0.6f)) return std::numeric_limits<distance>::infinity();
+        //if ((z <= 0.2f)) return std::numeric_limits<distance>::infinity();
         
         
         return -0.7f + 0.03f * (sin(15 * z) + sin(10 * x + 1));
@@ -265,9 +298,9 @@ private:
         return normalize(distance3(dx, 1, dz));
     }
     
-    bool contains_voxels(const aabb &node) const // TEMPORARY
+    bool contains_voxels(const math::basic_vector3<int> &min, const math::basic_vector3<int> &max) const // TEMPORARY
     {
-        int r = 10;
+        /*int r = 10;
         
         for (int px = 0; px < r; ++px)
             for (int pz = 0; pz < r; ++pz)
@@ -280,13 +313,20 @@ private:
                 if ((node.min.y <= height) && (height <= node.max.y)) return true;
             }
         
+        return false;*/
+        
+        for (int x = min.x; x < max.x; ++x)
+            for (int y = min.y; y < max.y; ++y)
+                for (int z = min.z; z < max.z; ++z)
+                    if (data[x][y][z].material != 0xFFFF) return true;
+        
         return false;
     }
     
-    void get_voxel_data(const aabb &node, uint16_t &normal, uint16_t &material) const
+    void get_voxel_data(const math::basic_vector3<int> &min, const math::basic_vector3<int> &max, uint16_t &normal, uint16_t &material) const
         // TEMPORARY
     {
-        int r = 10;
+        /*int r = 10;
         
         for (int px = 0; px < r; ++px)
             for (int pz = 0; pz < r; ++pz)
@@ -303,7 +343,99 @@ private:
                     
                     return;
                 }
+            }*/
+            
+        int x = min.x;
+        int y = min.y;
+        int z = min.z;
+        
+        normal = data[x][y][z].normal;
+        material = data[x][y][z].material;
+    }
+    
+    Voxel ***data;
+    
+    void alloc_data()
+    {
+        data = new Voxel**[RESOLUTION];
+        
+        for (int x = 0; x < RESOLUTION; ++x)
+        {
+            data[x] = new Voxel*[RESOLUTION];
+            
+            for (int y = 0; y < RESOLUTION; ++y)
+            {
+                data[x][y] = new Voxel[RESOLUTION];
             }
+        }
+    }
+    
+    void free_mem()
+    {
+        for (int x = 0; x < RESOLUTION; ++x)
+            for (int y = 0; y < RESOLUTION; ++y)
+                delete[] data[x][y];
+                
+        for (int x = 0; x < RESOLUTION; ++x)
+            delete[] data[x];
+            
+        delete[] data;
+    }
+    
+    void clear_data()
+    {
+        for (int x = 0; x < RESOLUTION; ++x)
+            for (int y = 0; y < RESOLUTION; ++y)
+                for (int z = 0; z < RESOLUTION; ++z)
+                    data[x][y][z].material = 0xFFFF;
+    }
+    
+    void filter_data()
+    {
+        for (int x = 1; x < RESOLUTION - 1; ++x)
+            for (int y = 1; y < RESOLUTION - 1; ++y)
+                for (int z = 1; z < RESOLUTION - 1; ++z)
+                {
+                    if ((data[x - 1][y][z].material != 0xFFFF)
+                     && (data[x + 1][y][z].material != 0xFFFF)
+                     && (data[x][y - 1][z].material != 0xFFFF)
+                     && (data[x][y + 1][z].material != 0xFFFF)
+                     && (data[x][y][z - 1].material != 0xFFFF)
+                     && (data[x][y][z + 1].material != 0xFFFF))
+                    {
+                        data[x][y][z].material = 0xFFFF;
+                    }
+                }
+    }
+    
+    void gen_data()
+    {
+        for (int x = 0; x < RESOLUTION; ++x)
+            for (int y = 0; y < RESOLUTION; ++y)
+                for (int z = 0; z < RESOLUTION; ++z)
+                {
+                    float px = ((float)x / RESOLUTION - 0.5f) * 2;
+                    float py = ((float)y / RESOLUTION - 0.5f) * 2;
+                    float pz = ((float)z / RESOLUTION - 0.5f) * 2;
+                    
+                    if (py <= heightmap(px, pz))
+                    {
+                        data[x][y][z].material = 0;
+                        
+                        data[x][y][z].normal = encode_normal(get_normal(px, pz));
+                    }
+                }
+    }
+    
+    void load_model()
+    {
+        alloc_data();
+    
+        clear_data();
+        
+        gen_data();
+        
+        filter_data();
     }
     
     // pray your libc overcommits :)
@@ -316,6 +448,7 @@ private:
     {
         nodes = (Node*)malloc(NODE_MEMORY);
         node_offset = 0;
+        load_model();
     }
     
     Node *alloc_node()
