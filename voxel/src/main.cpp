@@ -94,10 +94,12 @@ int main(int /*argc*/, char */*argv*/[])
 	
 	const int MAX_FRAMES = 500;
 	
-	auto t1 = Clock::now();
+	
 	
 	do
 	{
+		auto t1 = Clock::now();
+
 	    observer.direction.x = sin(time * 1.1f) / 3.0f;
 	    observer.position.z = cos(time * 1.0f) / 2.0f;
 	    
@@ -115,12 +117,11 @@ int main(int /*argc*/, char */*argv*/[])
         auto t2 = Clock::now();
     
         milliseconds ms = std::chrono::duration_cast<milliseconds>(t2 - t1);
-        float elapsed_seconds = ms.count() / 1000.0f;
         
         frames++;
         time += 0.02f;
         
-        std::cout << "FPS: " << frames / elapsed_seconds << std::endl;
+        std::cout << ms.count() << " ms" << std::endl;
 	} while (disp.draw(raster) && (frames < MAX_FRAMES));
 	#endif
 		
