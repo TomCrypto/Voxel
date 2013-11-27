@@ -1,6 +1,8 @@
 #include "scheduler.hpp"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include "log.hpp"
 
@@ -16,32 +18,42 @@ cl_platform_id scheduler::get_platform(const cl::Device &dev)
 void scheduler::setup(const cl::Device &dev, cl_context_properties *options)
 {
     context = cl::Context(std::vector<cl::Device>(1, dev), options);
-    queue   = cl::CommandQueue(context);
+    queue   = cl::CommandQueue(context, dev);
     device  = dev;
 }
 
+static std::string load(const std::string &path)
+{
+    std::ifstream file(path);
+    std::stringstream buf;
+    buf << file.rdbuf();
+    return buf.str();
+}
+
 cl::Program scheduler::acquire(const std::string &name,
-                               const std::string &args)
+                               const std::string &args,
+                               const std::string &prefix)
 {
     cl::Program program;
+    std::string source;
 
     try
     {
-        std::string src = "#include <../src/" + name + ".cl>";
-        program = cl::Program(context, src, false);
+        if (prefix.empty()) source = "#include <../src/" + name + ".cl>";
+        else source = prefix + "\n\n" + load("cl/src/" + name + ".cl");
+        program = cl::Program(context, source, false);
         std::string options = args + " -cl-std=CL1.2 "
                             + "-cl-kernel-arg-info "
                             + "-Icl/include/";
 
         program.compile(options.c_str());
     }
-    catch (cl::Error &e)
+    catch (const cl::Error &e)
     {
         print_error("Failed to load or compile the program '" + name + "'");
         std::string log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
         if (log.empty()) print_error("No compilation log available");
         else print_error("CLC compilation log follows");
-        
         std::cout << log;
         throw;
     }
@@ -69,7 +81,12 @@ size_t scheduler::get_arg(const cl::Kernel &kernel,
                           const std::string &name)
 {
 #ifdef NO_ARGUMENT_LOOKUP
-    #error Not implemented yet!
+    if (name == "frm_data") return 0;
+    if (name == "frm_info") return 1;
+    if (name == "geometry") return 2;
+    if (name == "observer") return 3;
+
+    if (name == "tex_data") return 2;
 #else
     size_t num_args = kernel.getInfo<CL_KERNEL_NUM_ARGS>();
 
@@ -79,7 +96,7 @@ size_t scheduler::get_arg(const cl::Kernel &kernel,
             if (kernel.getArgInfo<CL_KERNEL_ARG_NAME>(t) == name)
                 return t;
     }
-    catch (cl::Error &e)
+    catch (const cl::Error &e)
     {
         return (size_t)-1;
     }
@@ -99,6 +116,56 @@ void scheduler::run(const cl::Kernel &kernel,
 void scheduler::flush(void)
 {
     queue.finish();
+}
+
+cl::ImageGL scheduler::alloc_gl_image(cl_mem_flags flags, GLuint texture)
+{
+    return cl::ImageGL(context, flags, GL_TEXTURE_2D, 0, texture);
+}
+
+void scheduler::clear_gl_image(cl::Image &image)
+{
+    cl_float4 u;
+    u.s[0] = 0.25;
+    u.s[1] = 0.75;
+    u.s[2] = 0.25;
+    u.s[3] = 0;
+
+    cl::size_t<3> origin;
+    origin[0] = 0;
+    origin[1] = 0;
+    origin[2] = 0;
+
+    cl::size_t<3> region;
+    region[0] = 512;
+    region[1] = 512;
+    region[2] = 1;
+
+    queue.enqueueFillImage(image, u, origin, region);
+}
+
+void scheduler::clear_buffer(cl::Buffer &buffer)
+{
+    cl_float4 u;
+    u.s[0] = 0;
+    u.s[1] = 0;
+    u.s[2] = 0;
+    u.s[3] = 0;
+
+    queue.enqueueFillBuffer(buffer, u, 0, 512 * 512 * 16);
+}
+
+void scheduler::acquireGL(const cl::Memory &object)
+{
+    std::vector<cl::Memory> obj(1, object);
+    queue.enqueueAcquireGLObjects(&obj);
+
+}
+
+void scheduler::releaseGL(const cl::Memory &object)
+{
+    std::vector<cl::Memory> obj(1, object);
+    queue.enqueueReleaseGLObjects(&obj);
 }
 
 cl::Buffer scheduler::alloc_buffer(size_t size, cl_mem_flags flags,

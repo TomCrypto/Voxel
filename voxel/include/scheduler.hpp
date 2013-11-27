@@ -14,7 +14,8 @@ namespace scheduler
     void setup(const cl::Device &device, cl_context_properties *options = 0);
 
     cl::Program acquire(const std::string &name,
-                        const std::string &args = "");
+                        const std::string &args = "",
+                        const std::string &prefix = "");
 
     cl::Program link(const std::vector<cl::Program> &programs,
                      const std::string &name);
@@ -31,9 +32,13 @@ namespace scheduler
     {
         size_t index = get_arg(kernel, name);
         if (index == (size_t)-1)
+            #ifndef NO_ARGUMENT_LOOKUP
             throw std::logic_error("OpenCL implementation does not appear "
                                    "to support kernel argument query, try "
-                                   "compiling with 'NO_ARGUMENT_LOOKUP'.");
+                                   "compiling with 'NO_ARGUMENT_LOOKUP'");
+            #else
+            throw std::logic_error("No such argument '" + name + "'");
+            #endif
 
         kernel.setArg(index, value);
     }
@@ -42,6 +47,15 @@ namespace scheduler
              const cl::NDRange &dimensions);
 
     void flush(void);
+
+    cl::ImageGL alloc_gl_image(cl_mem_flags flags, GLuint texture);
+
+    void clear_gl_image(cl::Image &image);
+
+    void clear_buffer(cl::Buffer &buffer);
+
+    void acquireGL(const cl::Memory &object);
+    void releaseGL(const cl::Memory &object);
 
     cl::Buffer alloc_buffer(size_t size, cl_mem_flags flags, void *ptr
                             = nullptr);

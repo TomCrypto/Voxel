@@ -62,9 +62,9 @@ void decode_leaf(const uint32_t &leaf, uint16_t &normal, uint16_t &material)
     normal = leaf & 0xFFFF;
 }
 
-#define RESOLUTION 128
+#define RESOLUTION 64
 
-#define svo_depth 6 // TEMPORARY (will not be hardcoded later)
+#define svo_depth 5 // TEMPORARY (will not be hardcoded later)
 
 #define STACK_SIZE (4 * svo_depth) // can probably bring this down with some mathematical analysis of worst-case SVO traversal
                                    // (until we figure out how stackless traversal works, anyway)
@@ -80,7 +80,7 @@ public:
     {
         return light_pos;
     }
-    
+
     bool intersects(const distance3 &origin, const distance3 &direction,
 		            distance &dist, Contact &contact) const
 	{
@@ -92,7 +92,7 @@ public:
                   distance &dist, distance target_dist) const
     {
         Contact contact;
-    
+
         return traverse(origin, direction,
                         target_dist, dist, contact, true);
     }
@@ -106,39 +106,39 @@ public:
         return traverse(origin, direction,
                         target_dist, dist, contact, true);
     }
-    
+
     bool occludes(const distance3 &origin, const distance3 &direction) const
     {
         return occludes(origin, direction, std::numeric_limits<distance>::infinity());
     }
-	
+
 	VoxelTest()
 	{
 	    init_mem();
 	    root = build_SVO(svo_depth, world, math::basic_vector3<int>(0, 0, 0), math::basic_vector3<int>(RESOLUTION - 1, RESOLUTION - 1, RESOLUTION - 1));
 	    free_mem();
 	}
-	
+
 	size_t bufSize()
 	{
 	    return node_offset * sizeof(Node);
 	}
-	
+
 	void *getPtr()
 	{
         return nodes;
     }
-	
+
 private:
     const aabb world = aabb{distance3(-1, -1, -1), distance3(1, 1, 1)};
 
     // looks up a voxel through its memory address (this could be an offset later on
     // for virtualization) and fills in an appropriate Contact structure to indicate
     // the material and surface normal, when applicable
-    
+
     // this function has some pretty strong invariants to maintain, pay attention.
     // (read: if the invariants are not maintained, traversal will FAIL horribly)
-    
+
     // (procedural data generation can happen here as well)
     inline
     bool lookup(const  distance3 &origin, const distance3 &direction,
@@ -146,12 +146,12 @@ private:
                                                     Contact &contact) const
     {
         // default implementation, voxels are cubic and solid
-        
+
         (void)origin;
         (void)direction;
-        
+
         decode_leaf(leaf.offset, contact.normal, contact.material);
-        
+
         nearest = leaf.hit; // IMPORTANT: you must set "nearest" to the
         // nearest intersection within the voxel's bounding box, IF AND
         // ONLY IF this intersection is closer than the currently recorded
@@ -226,11 +226,11 @@ private:
                         uint32_t child = current.child[t];
                         if (child == 0x00000000) continue;
                         auto node = s.subdivide(child, t);
-                        
+
                         if (intersect(origin, invdir, node.cube, node.hit))
                             if (node.hit < nearest) stack.push(node);
                     }
-                    
+
                     /* Push back to front. */
                     stack.special_sort(last);
                 }
@@ -239,7 +239,7 @@ private:
 
         return hit;
 	} __attribute__ ((hot))
-	
+
 	void split_int(const math::basic_vector3<int> &min, const math::basic_vector3<int> &max, int t,
 	               math::basic_vector3<int> &child_min, math::basic_vector3<int> &child_max)
 	{
@@ -256,44 +256,44 @@ private:
         if (depth == 0)
         {
             // this is a leaf - add voxel
-            
+
             uint16_t normal, material;
             get_voxel_data(min, max, normal, material);
-            
+
             // encode leaf data into 32-bit offset
             return encode_leaf(normal, material);
         }
-        
+
         Node *node = alloc_node();
-        
+
         // build children here
         for (int t = 0; t < 8; ++t)
         {
             aabb child = split_node(cube, t);
-            
+
             math::basic_vector3<int> child_min, child_max;
             split_int(min, max, t, child_min, child_max);
-            
+
             if (!contains_voxels(child_min, child_max)) node->child[t] = 0;
             else node->child[t] = build_SVO(depth - 1, child, child_min, child_max);
         }
-        
+
         return (uint32_t)(node - nodes);
     }
-    
+
     float heightmap(distance x, distance z) const // TEMPORARY
     {
         //return 0.05f * (sin(x) + cos(z)) - 0.7f;
-        
+
         //if ((x <= -0.525f) || (x >= 0.6f)) return std::numeric_limits<distance>::infinity();
         //if ((z <= 0.2f)) return std::numeric_limits<distance>::infinity();
-        
-        
+
+
         return -0.7f + 0.03f * (sin(15 * z) + sin(10 * x + 1));
-        
+
         //return -2.0f/3.0f + 0.2f * x * x;
     }
-    
+
     math::float3 get_normal(distance x, distance z) const // TEMPORARY
     {
         distance dx = 0.2 * cos(10 * x + 1);
@@ -301,94 +301,94 @@ private:
 
         //distance dx = 0.4f * x;
         //distance dz = 0;
-    
+
         return normalize(distance3(dx, 1, dz));
     }
-    
+
     bool contains_voxels(const math::basic_vector3<int> &min, const math::basic_vector3<int> &max) const // TEMPORARY
     {
         /*int r = 10;
-        
+
         for (int px = 0; px < r; ++px)
             for (int pz = 0; pz < r; ++pz)
             {
                 distance x = node.min.x + (node.max.x - node.min.x) * (distance)px / r;
                 distance z = node.min.z + (node.max.z - node.min.z) * (distance)pz / r;
-                
+
                 distance height = heightmap(x, z);
-                
+
                 if ((node.min.y <= height) && (height <= node.max.y)) return true;
             }
-        
+
         return false;*/
-        
+
         for (int x = min.x; x < max.x; ++x)
             for (int y = min.y; y < max.y; ++y)
                 for (int z = min.z; z < max.z; ++z)
                     if (data[x][y][z].material != 0xFFFF) return true;
-        
+
         return false;
     }
-    
+
     void get_voxel_data(const math::basic_vector3<int> &min, const math::basic_vector3<int> &max, uint16_t &normal, uint16_t &material) const
         // TEMPORARY
     {
         /*int r = 10;
-        
+
         for (int px = 0; px < r; ++px)
             for (int pz = 0; pz < r; ++pz)
             {
                 distance x = node.min.x + (node.max.x - node.min.x) * (distance)px / r;
                 distance z = node.min.z + (node.max.z - node.min.z) * (distance)pz / r;
-                
+
                 distance height = heightmap(x, z);
-                
+
                 if ((node.min.y <= height) && (height <= node.max.y))
                 {
                     normal = encode_normal(get_normal(x, z));
                     material = 0;
-                    
+
                     return;
                 }
             }*/
-            
+
         int x = min.x;
         int y = min.y;
         int z = min.z;
-        
+
         normal = data[x][y][z].normal;
         material = data[x][y][z].material;
     }
-    
+
     Voxel ***data;
-    
+
     void alloc_data()
     {
         data = new Voxel**[RESOLUTION];
-        
+
         for (int x = 0; x < RESOLUTION; ++x)
         {
             data[x] = new Voxel*[RESOLUTION];
-            
+
             for (int y = 0; y < RESOLUTION; ++y)
             {
                 data[x][y] = new Voxel[RESOLUTION];
             }
         }
     }
-    
+
     void free_mem()
     {
         for (int x = 0; x < RESOLUTION; ++x)
             for (int y = 0; y < RESOLUTION; ++y)
                 delete[] data[x][y];
-                
+
         for (int x = 0; x < RESOLUTION; ++x)
             delete[] data[x];
-            
+
         delete[] data;
     }
-    
+
     void clear_data()
     {
         for (int x = 0; x < RESOLUTION; ++x)
@@ -396,7 +396,7 @@ private:
                 for (int z = 0; z < RESOLUTION; ++z)
                     data[x][y][z].material = 0xFFFF;
     }
-    
+
     void filter_data()
     {
         for (int x = 1; x < RESOLUTION - 1; ++x)
@@ -414,7 +414,7 @@ private:
                     }
                 }
     }
-    
+
     void gen_data()
     {
         for (int x = 0; x < RESOLUTION; ++x)
@@ -424,46 +424,46 @@ private:
                     float px = ((float)x / RESOLUTION - 0.5f) * 2;
                     float py = ((float)y / RESOLUTION - 0.5f) * 2;
                     float pz = ((float)z / RESOLUTION - 0.5f) * 2;
-                    
+
                     if (py <= heightmap(px, pz))
                     {
                         data[x][y][z].material = 0;
-                        
+
                         data[x][y][z].normal = encode_normal(get_normal(px, pz));
                     }
                 }
     }
-    
+
     void load_model()
     {
         alloc_data();
-    
+
         clear_data();
-        
+
         gen_data();
-        
+
         filter_data();
     }
-    
+
     // pray your libc overcommits :)
     #define NODE_MEMORY (1024 * 1024 * 1024)
-    
+
     Node *nodes;
     size_t node_offset;
-    
+
     void init_mem()
     {
         nodes = (Node*)malloc(NODE_MEMORY);
         node_offset = 0;
         load_model();
     }
-    
+
     Node *alloc_node()
     {
         Node *ptr = nodes + node_offset;
         node_offset++;
         return ptr;
     }
-    
+
     uint32_t root;
 };

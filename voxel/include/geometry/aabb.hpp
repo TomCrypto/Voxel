@@ -34,6 +34,9 @@ inline aabb split_node(const aabb &node, size_t index)
     return aabb{p, p + extent};
 }
 
+#undef near
+#undef far
+
 // to optimize
 inline bool intersect(const distance3 &origin,
                       const distance3 &invdir,

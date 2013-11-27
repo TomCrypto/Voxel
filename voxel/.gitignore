@@ -34,3 +34,6 @@ doc/
 *.user
 *.tlog
 *.obj
+
+*.cbp
+*.layout

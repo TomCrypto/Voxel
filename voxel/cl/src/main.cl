@@ -58,16 +58,24 @@ kernel void render(global             float4 *frm_data,
         struct PRNG rng = prng_init(id);
         float2 coords = resolve(frm_info);
         float ratio = get_ratio(frm_info);
-        
+
         for (size_t t = 0; t < sample_count(); ++t)
         {
             float2 uv = get_uv(frm_info, coords + sample(t));
             struct Ray ray = project(observer, uv.x, uv.y, ratio);
-            
+
             // TODO: pass materials/lights to integrator
-            
+
             float3 color = integrate(ray, geometry, &rng);
             accumulate(frm_info, frm_data, color);
         }
     }
+}
+
+kernel void buf2tex(global             float4 *frm_data,
+                    constant  struct FRM_INFO *frm_info,
+                    write_only      image2d_t  tex_data)
+{
+    write_imagef(tex_data, convert_int2(resolve(frm_info)),
+                 (float4)(get_color(frm_info, frm_data), 1));
 }

@@ -73,6 +73,16 @@ void accumulate(constant struct FRM_INFO *frm_info,
                 global            float4 *frm_data,
                                   float3  computed);
 
+/** Gets the color stored in the frame buffer for a given kernel work item.
+  *
+  * @param frm_info  The frame information structure.
+  * @param frm_data  The frame buffer.
+  *
+  * @return The color in the frame buffer.
+**/
+float3 get_color(constant struct FRM_INFO *frm_info,
+                 global            float4 *frm_data);
+
 /** This function returns an ID, uniquely identifying the current frame and the
   * current work item such that no two work items from any frame share the same
   * ID.

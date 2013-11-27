@@ -116,9 +116,9 @@ static bool check_version(const cl::Device &device)
         version.erase(pos);
 
     auto v = split(version, '.');
-    int major = atoi(v[0].c_str());
-    int minor = atoi(v[1].c_str());
-   
+    int major = std::stoi(v[0]);
+    int minor = std::stoi(v[1]);
+
     return (major == 1 ? minor >= 2 : major > 1);
 }
 
@@ -133,12 +133,27 @@ static bool check_gl_interop(const cl::Device &device)
     return false;
 }
 
+/* This function checks this device supports the full (not embedded) profile. */
+static bool check_full_profile(const cl::Device &device)
+{
+    return device.getInfo<CL_DEVICE_PROFILE>() == "FULL_PROFILE";
+}
+
+/* This function ensures the device supports images, we use 2D and 2D arrays. */
+static bool check_image_support(const cl::Device &device)
+{
+    return device.getInfo<CL_DEVICE_IMAGE_SUPPORT>();
+}
+
 /* This function checks if a given device "can run" the renderer in the sense *
  * that the device claims to support all required features (note it may still *
  * fail due to driver bugs or other reasons out of our control).              */
 static bool is_valid_device(const cl::Device &device)
 {
-    return check_version(device) && check_gl_interop(device);
+    return check_version(device)
+        && check_gl_interop(device)
+        && check_full_profile(device)
+        && check_image_support(device);
 }
 
 /* This function parses a device ID or name by the user and checks if a given *
@@ -146,10 +161,10 @@ static bool is_valid_device(const cl::Device &device)
 static bool check_device(const cl::Platform &platform,
                          const cl::Device &device,
                          size_t p_id, size_t d_id,
-                         string name)
+                         const string &name)
 {
     if (name.length() < 2) return false;
-    
+
     if (starts_with(name, "cl"))
     {
         vector<string> pd = split(split(name, '/')[1], ':');
@@ -190,8 +205,8 @@ static void print_device_type(cl_device_type type)
     print_type(type, CL_DEVICE_TYPE_ACCELERATOR,   LIGHTRED, WHITE, "ACC");
     print_type(type, CL_DEVICE_TYPE_DEFAULT,      LIGHTCYAN, WHITE, "DEF");
     print_type(type, CL_DEVICE_TYPE_CUSTOM,       LIGHTBLUE, WHITE, "CUS");
-   
-    setColor(WHITE); 
+
+    setColor(WHITE);
     cout << "] ";
 }
 
@@ -233,11 +248,11 @@ bool print_devices(void)
 {
     vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
-    
+
     for (auto p = platforms.begin(); p != platforms.end(); ++p)
     {
         vector<cl::Device> devices = get_devices(*p);
-        
+
         for (auto d = devices.begin(); d != devices.end(); ++d)
         {
             size_t p_id = p - platforms.begin();
@@ -245,7 +260,7 @@ bool print_devices(void)
             print_device(*p, *d, p_id, d_id);
         }
     }
-    
+
     return true;
 }
 
@@ -253,11 +268,11 @@ bool select_device(string name, cl::Device &device)
 {
     vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
-    
+
     for (auto p = platforms.begin(); p != platforms.end(); ++p)
     {
         vector<cl::Device> devices = get_devices(*p);
-        
+
         for (auto d = devices.begin(); d != devices.end(); ++d)
         {
             size_t p_id = p - platforms.begin();
@@ -270,7 +285,7 @@ bool select_device(string name, cl::Device &device)
                     /* Always attempt to use the device as required. */
                     print_warning("Device does not meet requirements");
                 }
-                
+
                 device = *d;
                 return true;
             }

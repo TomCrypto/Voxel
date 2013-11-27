@@ -14,6 +14,8 @@ struct Contact
 
 static math::float3 normals[65536];
 
+#define M_PI 3.14159265f
+
 inline uint16_t encode_normal(const math::float3 &normal)
 {
     float phi = atan2(normal.z, normal.x);

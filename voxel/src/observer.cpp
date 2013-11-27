@@ -3,6 +3,8 @@
 #include <CL/cl_platform.h>
 #include <cmath>
 
+#define M_PI 3.14159265f
+
 using namespace math;
 
 static cl::Buffer mem;

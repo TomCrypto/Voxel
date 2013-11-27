@@ -10,7 +10,7 @@ bool has_work(constant struct FRM_INFO *frm_info)
 float2 resolve(constant struct FRM_INFO *frm_info)
 {
     return (float2)(get_global_id(0) % frm_info->dim.x,
-                    get_global_id(0) / frm_info->dim.x);
+                    frm_info->dim.y - 1 - get_global_id(0) / frm_info->dim.x);
 }
 
 float2 get_uv(constant struct FRM_INFO *frm_info, float2 v)
@@ -28,6 +28,13 @@ void accumulate(constant struct FRM_INFO *frm_info,
                                   float3  computed)
 {
     frm_data[get_global_id(0)] += (float4)(computed, 1);
+}
+
+float3 get_color(constant struct FRM_INFO *frm_info,
+                 global            float4 *frm_data)
+{
+    float4 color = frm_data[get_global_id(0)];
+    return color.xyz / color.w; // RGBn format
 }
 
 ulong4 guid(constant struct FRM_INFO *frm_info)

@@ -29,3 +29,8 @@ void Frame::read(void *ptr)
 {
     scheduler::read(frame_buffer, 0, info.width * info.height * 16, ptr, true);
 }
+
+void Frame::clear(void)
+{
+    scheduler::clear_buffer(frame_buffer);
+}

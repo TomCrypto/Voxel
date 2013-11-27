@@ -13,9 +13,12 @@ CXX ?= clang++
 
 CXXFLAGS = -O3 -march=native -std=c++11 \
            -Wall -Wextra \
-           -D__CL_ENABLE_EXCEPTIONS
+           -D__CL_ENABLE_EXCEPTIONS \
+           -I"C:/Program Files (x86)/AMD APP SDK/2.9/include" \
+           -I"C:/SFML-2.1/include" \
+           -DNO_ARGUMENT_LOOKUP
 
-LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lX11 -lGL -lGLU -lOpenCL
+LDFLAGS = -L"C:/Program Files (x86)/AMD APP SDK/2.9/bin/x86_64" -L"C:/SFML-2.1/lib" -lsfml-graphics -lsfml-window -lsfml-system -lopengl32 -lglu32 -lOpenCL
 
 # Locate relevant source files, headers, and destination .obj's
 

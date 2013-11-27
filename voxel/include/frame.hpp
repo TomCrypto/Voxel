@@ -6,8 +6,6 @@
 
 #include "scheduler.hpp"
 
-// TODO: implement clear
-
 struct FrameInfo
 {
     cl_uint width, height;
@@ -24,6 +22,8 @@ class Frame
         void bind_to(cl::Kernel &kernel);
 
         void read(void *ptr);
+
+        void clear(void);
 
     private:
         cl::Buffer frame_buffer;
