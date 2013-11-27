@@ -7,48 +7,30 @@
   * Provides access to the most common integrators. 
 **/
 
-/** @todo At the moment some of the basic integrators rely
-  *       on HDR, but as there is no HDR implemented yet
-  *       they have little tweaks in them to keep them in
-  *       the visible range - this will be fixed later.
-  *
-  * @todo Start thinking about how to handle lights flexibly.
-  *
-  * @todo Colors should not be float3's. Use an abstraction
-  *       which can handle different color spaces and ranges.
-**/
+#include <CL/cl.hpp>
 
-#include <algorithm>
-#include <cmath>
-
-#include <cstdint>
-
-#include "math/common.hpp"
-#include "math/vector3.hpp"
-
-#include "contact.hpp"
+#include "scheduler.hpp"
 
 /** @namespace integrators
   * 
   * @brief Namespace for the integrators.
   *
-  * An integrator is a function which takes the geometry of the world (equipped
-  * with efficient ray intersection and occlusion algorithms) and calculates an
-  * approximation to the "light transport equation", which describes the steady
-  * state flow of light in the world - said approximation can be as accurate as
-  * the integrator desires, therefore integrators have a lot of freedom.
-  *
-  * Integrators are such named because in their purest form, the equation which
-  * they attempt to solve is an integral. However, as noted further above, they
-  * can range from unphysical integrators, such as computing depth or occlusion
-  * maps, to full-blown photorealistic integrators.
-  *
-  * Integrators take as an input the geometry and a camera ray, and will return
-  * an RGB color describing the color and intensity of the light perceived from
-  * this camera ray. Integrators may call themselves recursively if they wish.
+  * @see include/modules/integrator.cl
 **/
 namespace integrators
 {
+    cl::Program depth(void)
+    {
+        return scheduler::acquire("modules/integrators/depth");
+    }
+
+    cl::Program ambient_occlusion(void)
+    {
+        return scheduler::acquire("modules/integrators/ao");
+    }
+
+    #if 0
+
     // later this will probably compute some kind of BRDF
     math::float3 decode_material(uint16_t material)
     {
@@ -177,4 +159,6 @@ namespace integrators
 	        return math::float3(0, 0, 0);
 	    }
     }
+    
+    #endif
 };

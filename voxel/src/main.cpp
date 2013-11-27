@@ -1,129 +1,213 @@
-#include <cstdlib>
-#include <cstring>
-#include <cmath>
-#include <vector>
-#include <functional>
+#include <algorithm>
 
-#include "contact.hpp" // for build_table()
+#include <CL/cl.hpp>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
+
+#ifndef CL_VERSION_1_2
+    #error "OpenCL 1.2 is required to build this software!"
+#endif
+
+#include "scheduler.hpp"
+#include "devices.hpp"
+#include "log.hpp"
+
+#include "frame.hpp"
 
 #include "observer.hpp"
 
-#include "renderer.hpp"
-//#include "display.hpp"
+#include "integrators/generic.hpp"
+#include "subsamplers/generic.hpp"
+#include "projections/generic.hpp"
 
-#include "geometry/cornell_box.hpp"
+#include "math/vector4.hpp"
 #include "geometry/voxel_test.hpp"
 
-#include "integrators/generic.hpp"
-#include "projections/generic.hpp"
-#include "subsamplers/generic.hpp"
+#include <SFML/Window.hpp>
+#include <SFML/OpenGL.hpp>
+#include <GL/glx.h>
 
-#include "display/x11_display.hpp"
+using namespace math;
 
-//#include "compile_settings.hpp" // no need for this for now
-
-#include <chrono>
-
-typedef std::chrono::high_resolution_clock Clock;
-typedef std::chrono::milliseconds milliseconds;
-
-void draw(const Raster &raster, const char *path)
+void draw(const float4 *data, size_t width, size_t height, const char *path)
 {
 	FILE *file = fopen(path, "w");
 
-	fprintf(file, "P3\n\n%d %d 255\n",
-	    (int)raster.width(),
-	    (int)raster.height());
+	fprintf(file, "P3\n\n%zu %zu 255\n",
+	        width, height);
 
-	for (size_t y = 0; y < raster.height(); ++y)
-	for (size_t x = 0; x < raster.width(); ++x)
+	for (size_t y = 0; y < height; ++y)
+	for (size_t x = 0; x < width; ++x)
+	{
 	    fprintf(file, "%d %d %d ",
-		    raster[y][x].r,
-		    raster[y][x].g,
-		    raster[y][x].b);
+		    (int)(std::min(1.0f, std::max(0.0f, data->x / data->w)) * 255),
+		    (int)(std::min(1.0f, std::max(0.0f, data->y / data->w)) * 255),
+		    (int)(std::min(1.0f, std::max(0.0f, data->z / data->w)) * 255));
+        ++data;
+    }
 
 	fclose(file);
 }
 
-int main(int /*argc*/, char */*argv*/[])
+static void do_stuff(void);
+
+static const char *list_devices_cmd = "--list-devices";
+static const char *use_device_cmd   = "--use-device";
+
+static bool has_argument(int argc, char *argv[], const char *arg)
 {
-	build_table(); // for the 16-bit normals
-
-	Raster raster(512, 512);
-	VoxelTest geometry;
-	X11Display disp(512, 512, "Voxel Engine");
-	
-	// configure the observer (will be done elsewhere later)
-	
-	Observer observer;
-	observer.position = math::float3(0.1f, -0.4f, -0.4f);
-	observer.direction = math::float3(-0.1f, -0.2f, 1);
-	observer.fov = 75 * (M_PI / 180.0f);
-	
-	#if 0
-	auto t1 = Clock::now();
-	
-    render(std::bind(integrators::direct<decltype(geometry)>, geometry, _1, _2),
-           std::bind(projections::perspective, observer, _1, _2, _3, _4, _5),
-           std::bind(subsamplers::none, _1, _2, _3),
-           raster);
-	
-	auto t2 = Clock::now();
+    for (int t = 0; t < argc - 1; ++t)
+        if (!strcmp(argv[t], arg)) return true;
     
-    milliseconds ms = std::chrono::duration_cast<milliseconds>(t2 - t1);
+    return false;
+}
+
+static char *get_argument(int argc, char *argv[], const char *arg)
+{
+    for (int t = 0; t < argc - 1; ++t)
+        if (!strcmp(argv[t], arg)) return argv[t + 1];
     
-    std::cout << "Time to render: " << ms.count() << " ms." << std::endl;
+    return nullptr; /* Should not happen. */
+}
 
-	draw(raster, "out.ppm");
-	
-	while (disp.draw(raster))
-		;
+int main(int argc, char *argv[])
+{
+    if ((argc == 2) && !strcmp(argv[1], list_devices_cmd))
+        return print_devices() ? EXIT_SUCCESS : EXIT_FAILURE;
 
-    #else
+    if (has_argument(argc, argv, use_device_cmd))
+    {
+        try
+        {
+            cl::Device device; // This is selected by the user
+            auto name = get_argument(argc, argv, use_device_cmd);
+            if (!select_device(name, device)) return EXIT_FAILURE;
 
-	std::cout << "!!! WARNING !!!" << std::endl;
-	std::cout << "The animation will take 100% of your CPU while it is running - "
-	             "please ensure your processor has adequate cooling hardware, or "
-	             "it may overheat." << std::endl << std::endl;
-	std::cout << "Press <ENTER> to begin..." << std::endl;
-	
-	std::cin.get();
-	
-	float time = 0;
-	int frames = 0;
-	
-	const int MAX_FRAMES = 500;
-	
-	
-	
-	do
-	{
-		auto t1 = Clock::now();
+            try
+            {
+                print_info("Initializing OpenCL scheduler");
+                
+                sf::Window window(sf::VideoMode(800, 600), "OpenGL");
+                
+                printf("Context = %p.\n", glXGetCurrentContext());
+                printf("Display = %p.\n", glXGetCurrentDisplay());
+                
+                cl_context_properties props[] = 
+                {
+                    CL_GL_CONTEXT_KHR, (cl_context_properties)glXGetCurrentContext(),
+                    CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
+                    CL_CONTEXT_PLATFORM, (cl_context_properties)scheduler::get_platform(device),
+                    0
+                };
+                
+                scheduler::setup(device, props);
+                print_info("Scheduler ready");
 
-	    observer.direction.x = sin(time * 1.1f) / 3.0f;
-	    observer.position.z = cos(time * 1.0f) / 2.0f;
-	    
-	    light_pos.x = cos(time) * 0.5f; // hack to get some moving light sources
-	    light_pos.z = sin(time) * 0.5f;
-	    
-	    using namespace std::placeholders;
-	
-	    // note that rendering is entirely read-only -> no synchronization needed
-	    render(std::bind(integrators::direct<decltype(geometry)>, geometry, _1, _2),
-               std::bind(projections::perspective, observer, _1, _2, _3, _4, _5),
-               std::bind(subsamplers::none, _1, _2, _3),
-               raster);
-        
-        auto t2 = Clock::now();
+                try
+                {
+                    print_info("Initializing renderer");
+                    do_stuff();
+                    print_info("Renderer up and running");
     
-        milliseconds ms = std::chrono::duration_cast<milliseconds>(t2 - t1);
+                    print_info("Initializing user interface");
+                    
+                    print_info("User interface ready, starting");
+                    
+                    window.display();
+                    
+                    int x;
+                    std::cin >> x;
+                }
+                catch (cl::Error &e)
+                {
+                    print_exception("OpenCL runtime error", e);
+                    return EXIT_FAILURE; // Perhaps driver bug?
+                }
+            }
+            catch (cl::Error &e)
+            {
+                print_exception("OpenCL initialization failure", e);
+                return EXIT_FAILURE; // Selected device unsupported?
+            }
+        }
+        catch (std::exception &e)
+        {
+            print_exception("A fatal error occurred", e);
+            return EXIT_FAILURE; // Not an OpenCL error..
+        }
         
-        frames++;
-        time += 0.02f;
+        return EXIT_SUCCESS;
+    }
+    
+    printf("Usage:\n\t%s %s [name]", argv[0], use_device_cmd);
+    printf(      "\n\t%s %s\n", argv[0], list_devices_cmd);
+    printf("\nThis software requires OpenCL 1.2.\n");
+    return EXIT_FAILURE; // Argument parsing error.
+}
+
+void do_stuff(void)
+{
+    // start rendering here
         
-        std::cout << ms.count() << " ms" << std::endl;
-	} while (disp.draw(raster) && (frames < MAX_FRAMES));
-	#endif
-		
-	return EXIT_SUCCESS;
+    Frame frame(512, 512);
+    
+    VoxelTest geometry_o;
+    
+    cl::Buffer geometry_buffer = scheduler::alloc_buffer(geometry_o.bufSize(),
+                                 CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                 geometry_o.getPtr());
+   
+    observer::setup();
+
+    observer::move_to(math::float3(-0.15, -0.60, -0.20));
+    observer::look_at(math::float3(0, -0.5, 1));
+    observer::set_fov(90);
+
+    math::float4 *buf = new math::float4[512 * 512];
+
+    cl::Program main_prog = scheduler::acquire("main");
+
+    cl::Program projection = projections::perspective();
+    cl::Program subsampler = subsamplers::low_discrepancy<1>();
+    cl::Program integrator = integrators::ambient_occlusion();
+    
+    cl::Program geometry = scheduler::acquire("core/geometry");
+    cl::Program frame_io = scheduler::acquire("core/frame_io");
+    cl::Program math_lib = scheduler::acquire("core/math_lib");
+    cl::Program prng_lib = scheduler::acquire("core/prng_lib");
+    
+    std::vector<cl::Program> programs;
+    programs.push_back(main_prog);
+    programs.push_back(projection);
+    programs.push_back(subsampler);
+    programs.push_back(integrator);
+    programs.push_back(math_lib);
+    programs.push_back(prng_lib);
+    programs.push_back(geometry);
+    programs.push_back(frame_io);
+    
+    cl::Program linked = scheduler::link(programs, "renderer");
+    
+    cl::Kernel kernel = scheduler::get(linked, "render");
+
+    frame.bind_to(kernel);
+    observer::bind_to(kernel);
+
+    scheduler::set_arg(kernel, "geometry", geometry_buffer);
+    
+    for (size_t t = 0; t < 1; ++t)
+    {
+        frame.next();
+
+        scheduler::run(kernel, cl::NDRange(512 * 512));
+    }
+    
+    frame.read(buf);
+   
+    // postprocess
+
+    draw(buf, 512, 512, "out.ppm");
+    
+    delete[] buf;
 }

@@ -7,25 +7,60 @@
   * Provides access to the most common subsampler types. 
 **/
 
+#include <CL/cl.hpp>
 #include <cstddef>
+#include <string>
 
-#include "math/random.hpp"
+#include "scheduler.hpp"
 
 /** @namespace subsamplers
   * 
   * @brief Namespace for the subsamplers.
   *
-  * A subsampler is a function which, provided some integer between \f$0\f$ and
-  * \f$n\f$, returns a two-dimensional offset \f$(\mathrm{d}x, \mathrm{d}y)\f$,
-  * called a sample point, which offets the position of a pixel on an image and
-  * allows the renderer to perform subpixel sampling, reducing aliasing.
-  *
-  * The value of \f$n\f$ is denoted the order of the subsampler, and is a rough
-  * measure of quality (in that a higher order results in more subpixel samples
-  * and hence a better estimate of the true color of a pixel).
+  * @see include/modules/subsampler.cl
 **/
 namespace subsamplers
 {
+    namespace details
+    {
+        template <size_t base>
+        float halton(size_t index)
+        {
+            float f = 1.0f / base;
+            float result = 0;
+
+            while (index > 0)
+            {
+                result += f * (index % base);
+                index /= base;
+                f /= base;
+            }
+
+            return result;
+        }
+    };
+
+    template <size_t order, size_t bA = 2, size_t bB = 3>
+    cl::Program low_discrepancy(void)
+    {
+        std::string def = "-DORDER=" + std::to_string(order) + " ";
+        
+        def += "-DSAMPLES=\"";
+        
+        for (size_t t = 0; t < order; ++t)
+        {
+            float dx = details::halton<bA>(t) - 0.5f; // x-dimension offset
+            float dy = details::halton<bB>(t) - 0.5f; // y-dimension offset
+            def += "(" + std::to_string(dx) + "," + std::to_string(dy) + "),";
+        }
+        
+        def += "\"";
+
+        return scheduler::acquire("modules/subsamplers/low_discrepancy", def);
+    }
+
+    #if 0
+
     /** Generates only a single sampling point: this corresponds to the trivial
       * subsampler, which is the fastest but generally results in aliasing.
       *
@@ -104,4 +139,6 @@ namespace subsamplers
 
         return false;
     }
+
+    #endif
 };

@@ -62,9 +62,9 @@ void decode_leaf(const uint32_t &leaf, uint16_t &normal, uint16_t &material)
     normal = leaf & 0xFFFF;
 }
 
-#define RESOLUTION 256
+#define RESOLUTION 128
 
-#define svo_depth 7 // TEMPORARY (will not be hardcoded later)
+#define svo_depth 6 // TEMPORARY (will not be hardcoded later)
 
 #define STACK_SIZE (4 * svo_depth) // can probably bring this down with some mathematical analysis of worst-case SVO traversal
                                    // (until we figure out how stackless traversal works, anyway)
@@ -114,13 +114,20 @@ public:
 	
 	VoxelTest()
 	{
-	    printf("Building SVO (this is done only once).\n");
 	    init_mem();
 	    root = build_SVO(svo_depth, world, math::basic_vector3<int>(0, 0, 0), math::basic_vector3<int>(RESOLUTION - 1, RESOLUTION - 1, RESOLUTION - 1));
-	    printf("SVO built (%zu nodes, depth = %d).\n",
-	           node_offset, svo_depth);
 	    free_mem();
 	}
+	
+	size_t bufSize()
+	{
+	    return node_offset * sizeof(Node);
+	}
+	
+	void *getPtr()
+	{
+        return nodes;
+    }
 	
 private:
     const aabb world = aabb{distance3(-1, -1, -1), distance3(1, 1, 1)};

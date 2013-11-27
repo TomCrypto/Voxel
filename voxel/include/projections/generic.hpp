@@ -7,6 +7,10 @@
   * Provides access to the most common projection models. 
 **/
 
+#include <CL/cl.hpp>
+
+#include "scheduler.hpp"
+
 #include <cmath>
 
 #include "math/common.hpp"
@@ -17,26 +21,17 @@
   * 
   * @brief Namespace for the projections.
   *
-  * A projection is a function which takes normalized screen coordinates within
-  * \f$[-1, 1]\f$ as well as the renderer's aspect ratio and also some observer
-  * related information (such as the observer's position, or the direction that
-  * it is currently looking towards, ...) and produces the corresponding camera
-  * ray, as an origin point and a normalized direction vector.
-  *
-  * This allows for arbitrary projection models, from an orthographic camera to
-  * a full-blown perspective camera with depth-of-field effects and lensing, or
-  * fisheye/spherical projections.
-  *
-  * Projection models which do not use the full image surface should return the
-  * value \c false to indicate this screen coordinate must be left unprocessed,
-  * but most other projection models will just return \c true unconditionally.
-  *
-  * Note that depending on the subsampler used, the screen coordinates might be
-  * outside the indicated range by a small margin - projections must attempt to
-  * handle this gracefully by implementing appropriate boundary conditions.
+  * @see include/modules/projection.cl
 **/
 namespace projections
 {
+    cl::Program perspective(void)
+    {
+        return scheduler::acquire("modules/projections/perspective");
+    }
+
+    #if 0
+
     using namespace math;
 
     /** Implements a 3D perspective camera following the pinhole model, support
@@ -97,4 +92,6 @@ namespace projections
 
         return true;
     }
+
+    #endif
 };

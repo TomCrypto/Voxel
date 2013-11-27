@@ -5,22 +5,17 @@ BIN_DIR = bin/
 OBJ_DIR = obj/
 CPP_DIR = src/
 HPP_DIR = include/
-TEST_DIR = test/
-TMP_DIR = /tmp/
-DEP_DIR = ../
 DOC_DIR = doc/
-
-ANALYSIS_DIR = analysis
 
 # Define the default compiler settings
 
 CXX ?= clang++
+
 CXXFLAGS = -O3 -march=native -std=c++11 \
            -Wall -Wextra \
-           -fopenmp
+           -D__CL_ENABLE_EXCEPTIONS
 
-LDFLAGS = -lX11 -lGL -lGLU -fopenmp
-TEST_LDFLAGS = -lgtest -pthread
+LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lX11 -lGL -lGLU -lOpenCL
 
 # Locate relevant source files, headers, and destination .obj's
 
@@ -30,15 +25,6 @@ HPP = $(shell find $(HPP_DIR) -name '*.hpp')
 CPP = $(shell find $(CPP_DIR) -name '*.cpp')
 OBJ = $(subst .cpp,.o,$(subst $(CPP_DIR),$(OBJ_DIR),$(CPP)))
 
-TEST_OBJ = $(shell find $(OBJ_DIR) -type f \( -name '*.o' ! -name 'main.o' \))
-TEST_CPP = $(shell find $(TEST_DIR) -name '*.cpp')
-
-# Handle specific compilation modes and extensions
-
-ifeq ($(mode), pedantic)
-	CXXFLAGS += -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic
-endif
-
 # Compile the target program
 
 default: build
@@ -46,7 +32,6 @@ default: build
 run: build
 	$(BIN)
 
-# removed precompile for now, it forces a rebuild
 build: $(BIN)
 
 $(BIN): $(OBJ)
@@ -55,34 +40,7 @@ $(BIN): $(OBJ)
 
 $(OBJ): $(OBJ_DIR)%.o: $(CPP_DIR)%.cpp $(HPP)
 	@mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I$(DEP_DIR) -c $< -o $@
-
-# Assign defaults to configs
-
-integrator ?= FlatIntegrator
-
-# The precompile pass checks to see if any changes should be made to the compile_settings
-# file. If this file must be changed, a recompile is induced.
-
-check_setting = $(shell if test "$(shell sed -n '$(2)P' include/compile_settings.hpp)" != "\#define $(3) $(1);"; then (sed -i "$(2)s/.*/\#define $(3) $(1)/" include/compile_settings.hpp); fi)
-
-.PHONY: precompile
-precompile:
-	#$(call check_setting,$(integrator),3,"Integrator")
-
-# Run the static analyzer and print the results (clang only)
-
-.PHONY: analyze
-analyze: clean_bin clean_obj
-	scan-build --use-analyzer $(shell which $(CXX)) -o $(ANALYSIS_DIR) make -j 8
-
-# Compile and run the unit tests on the fly
-
-.PHONY: test
-test: $(OBJ) $(HPP)
-	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -I$(DEP_DIR) $(TEST_OBJ) $(TEST_CPP) -o $(TMP) $(LDFLAGS) $(TEST_LDFLAGS)
-	-$(TMP) $(ARGS)
-	rm $(TMP)
+	$(CXX) $(CXXFLAGS) -I$(HPP_DIR) -c $< -o $@
 
 # Create and symlink the Doxygen documentation
 
@@ -106,11 +64,7 @@ clean_obj:
 clean_doc:
 	rm -rf $(DOC_DIR)
 
-.PHONY: clean_analysis
-clean_analysis:
-	rm -rf $(ANALYSIS_DIR)
-
 .PHONY: clean
-clean: clean_bin clean_obj clean_doc clean_analysis
+clean: clean_bin clean_obj clean_doc
 	
 

@@ -1,60 +1,13 @@
+// manages rendering
+
 #pragma once
 
-#include <cstdlib>
-
-#include <omp.h>
-
-#include <vector>
-#include <stdexcept>
-#include <functional>
-
-#include "math/vector3.hpp"
-#include "display/raster.hpp"
-
-template <typename Integrator,
-          typename Projection,
-          typename Subsampler>
-void render(Integrator &&integrator,
-            Projection &&projection,
-            Subsampler &&subsampler,
-            Raster &raster)
+class Renderer
 {
-    // integration step (this solves the rendering equation,
-    // and is where near 100% of the runtime will be spent)
+    public:
+        
 
-	// need to rewrite this to use float2's and maybe a ray structure
-
-    float ratio = (float)raster.width() / raster.height();
-
-	#pragma omp parallel for schedule(dynamic, 1)
-	for (size_t y = 0; y < raster.height(); ++y)
-	{
-		for (size_t x = 0; x < raster.width(); ++x)
-		{
-		    math::float3 temp = math::float3();
-		    size_t s = 0;
-		    float dx, dy;
-		
-		    while (subsampler(s++, dx, dy))
-		    {
-		        float px = ((x + dx) / raster.width() - 0.5f) * 2;
-		        float py = ((y + dy) / raster.height() - 0.5f) * 2;
-		        
-		        // (px, py) in screen space coordinates (NOT accounting for aspect ratio)
-		        
-		        math::float3 origin, direction;
-		        
-		        if (projection(px, py, ratio, origin, direction))
-    				temp += integrator(origin, direction);
-		    }
-		    
-			temp /= s - 1; // s = index after last sample point, so count is s - 1
-			raster[y][x].r = int(temp.x * 255.0f); 
-			raster[y][x].g = int(temp.y * 255.0f);
-			raster[y][x].b = int(temp.z * 255.0f);
-			raster[y][x].a = 255;
-		}
-    }
-	
-	// post-processing goes here
-}
+        cl::Program subsampler;
+        cl::Program projection;
+        cl::Program integrator;
+};

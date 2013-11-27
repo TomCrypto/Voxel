@@ -44,10 +44,10 @@ inline math::float3 decode_normal_slow(const uint16_t &normal)
     return math::spherical(phi, theta);
 }
 
-static void build_table()
+/*static void build_table()
 {
     for (int t = 0; t < 65536; ++t) normals[t] = decode_normal_slow(t);
-}
+}*/
 
 /** KNOWN FAST
 

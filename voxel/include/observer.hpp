@@ -1,20 +1,24 @@
 #pragma once
 
+#include <CL/cl.hpp>
+
+#include "scheduler.hpp"
+
+#include "math/vector4.hpp"
 #include "math/vector3.hpp"
+#include "math/matrix3x3.hpp"
+#include "math/common.hpp"
 
-// this again depends on what type of scalar is used to represent positions,
-// but for now they are floats to keep it simple
-
-// this class could contain things like "move player forward", etc.. all they
-// need to do is provide position/view direction for the projection models,
-// then the rest is just convenience functions for the GUI
-struct Observer
+namespace observer
 {
-    public:
-        math::float3 position;
-        math::float3 direction;
-        float fov;
-    
-    private:
-    
+    using namespace math;
+
+    void setup(void);
+
+    void move_to(const float3 &pos);
+    void look_at(const float3 &dir);
+
+    void set_fov(float fov);
+
+    void bind_to(cl::Kernel &kernel);
 };
