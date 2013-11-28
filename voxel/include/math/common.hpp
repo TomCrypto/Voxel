@@ -28,4 +28,14 @@ namespace math
 
         return basic_matrix3x3<scalar>(x, y, z);
     }
+
+    template <typename scalar>
+    basic_matrix3x3<scalar> basis2(const basic_vector3<scalar> &forward, const basic_vector3<scalar> &up)
+    {
+        auto z = normalize(forward);
+        auto x = normalize(cross(up, z));
+        auto y = normalize(cross(z, x));
+
+        return basic_matrix3x3<scalar>(x, y, z);
+    }
 };

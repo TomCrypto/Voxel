@@ -17,6 +17,11 @@ namespace observer
 
     void move_to(const float3 &pos);
     void look_at(const float3 &dir);
+    void forward(const float depth);
+
+    void turn_h(const float amount);
+    void turn_v(const float amount);
+    void roll(float amount);
 
     void set_fov(float fov);
 

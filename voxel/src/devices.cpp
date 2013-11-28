@@ -236,7 +236,6 @@ static void print_selected_device(const cl::Platform &platform,
                                   const cl::Device &device)
 {
     print_info_header();
-
     setColor(WHITE);
     cout << "Using ";
     print_device_name(platform, device);
@@ -275,8 +274,7 @@ bool select_device(string name, cl::Device &device)
 
         for (auto d = devices.begin(); d != devices.end(); ++d)
         {
-            size_t p_id = p - platforms.begin();
-            size_t d_id = d - devices.begin();
+            size_t p_id = p - platforms.begin(), d_id = d - devices.begin();
             if (check_device(*p, *d, p_id, d_id, trim(name)))
             {
                 print_selected_device(*p, *d);

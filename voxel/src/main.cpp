@@ -27,6 +27,8 @@
 #include <SFML/OpenGL.hpp>
 #include <SFML/Window/Mouse.hpp>
 
+#include "interop.hpp"
+
 #include <Wingdi.h>
 
 using namespace math;
@@ -69,48 +71,23 @@ int main(int argc, char *argv[])
 
             try
             {
-                // maybe a platform-dependent function that returns a cl::ImageGL while initializing the scheduler using the window handle
-                // (and an equivalent function to deallocate that stuff)
-                // then the rest of the code should be able to just use SFML and work??
-
-                print_info("Initializing OpenCL scheduler");
-
+                print_info("Initializing user interface");
                 sf::Window window(sf::VideoMode(512, 512), "Voxel");
                 window.setFramerateLimit(60);
                 window.setPosition(sf::Vector2i(256, 256));
+                print_info("User interface ready, starting");
 
-                //wglMakeCurrent(GetDC(window.getSystemHandle()), wglGetCurrentContext());
-
-                cl_context_properties props[] =
-                {
-                    CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
-                    CL_WGL_HDC_KHR, (cl_context_properties)GetDC(window.getSystemHandle()),
-                    0
-                };
-
-                scheduler::setup(device, props);
-                print_info("Scheduler ready");
-
-                glGenTextures(1, &tex);
-                glBindTexture(GL_TEXTURE_2D, tex);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+                print_info("Detecting best CL/GL interop environment");
+                interop::initialize(device, window.getSystemHandle());
+                print_info("Scheduler ready, interop is available");
 
                 try
                 {
-                    cl::ImageGL image = scheduler::alloc_gl_image(CL_MEM_WRITE_ONLY, tex);
+                    cl::ImageGL image = interop::get_image(512, 512);
 
                     print_info("Initializing renderer");
                     do_stuff(window, image);
                     print_info("Renderer up and running");
-
-                    print_info("Initializing user interface");
-
-                    print_info("User interface ready, starting");
                 }
                 catch (const cl::Error &e)
                 {
@@ -201,6 +178,16 @@ void do_stuff(sf::Window &window, cl::ImageGL &image)
                 window.close();
             if (event.key.code == sf::Keyboard::Escape)
                 return;
+            if (event.key.code == sf::Keyboard::W)
+            {
+                observer::forward(0.01f);
+                frame.clear();
+            }
+            if (event.key.code == sf::Keyboard::R)
+            {
+                observer::roll(0.05f);
+                frame.clear();
+            }
         }
 
         deltas = fixed-sf::Mouse::getPosition();
@@ -208,9 +195,11 @@ void do_stuff(sf::Window &window, cl::ImageGL &image)
         {
             sf::Mouse::setPosition(fixed);
             frame.clear();
-            x -= (float)deltas.x / 256;
-            y += (float)deltas.y / 256;
-            observer::move_to(math::float3(x, y, -0.20));
+            x = (float)deltas.x / 256;
+            y = -(float)deltas.y / 256;
+            //observer::move_to(math::float3(x, y, -0.20));
+            observer::turn_h(x * 0.1f);
+            observer::turn_v(y * 0.1f);
         }
 
         frame.next();
@@ -227,16 +216,7 @@ void do_stuff(sf::Window &window, cl::ImageGL &image)
 
         scheduler::releaseGL(image);
 
-        glEnable(GL_TEXTURE_2D);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glBegin(GL_QUADS);
-        glTexCoord2d(0, 0); glVertex2d(-1, -1);
-        glTexCoord2d(1, 0); glVertex2d(+1, -1);
-        glTexCoord2d(1, 1); glVertex2d(+1, +1);
-        glTexCoord2d(0, 1); glVertex2d(-1, +1);
-        glEnd();
-
-        glDisable(GL_TEXTURE_2D);
+        interop::draw_image(image);
 
         window.display();
     }
