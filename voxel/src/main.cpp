@@ -9,8 +9,20 @@
     #error "OpenCL 1.2 is required to build this software!"
 #endif
 
+/*
+#error "TODO (ideas so far, non-exhaustive):"
+#error "1. move SFML window code to its own namespace (gui or something)"
+#error "2. handle window resize (change hardcoded sizes as needed)"
+#error "3. clean up observer and frame"
+#error "4. maybe work on the command-line parsing"
+#error "5. try and see if integrating ATB is feasible"
+#error "6. once platform-specific stuff is working, fix makefile to have a"
+#error "   Windows configuration and make everything work on Linux"
+*/
+
 #include "scheduler.hpp"
 #include "devices.hpp"
+#include "interop.hpp"
 #include "log.hpp"
 
 #include "frame.hpp"
@@ -24,12 +36,7 @@
 #include "geometry/voxel_test.hpp"
 
 #include <SFML/Window.hpp>
-#include <SFML/OpenGL.hpp>
 #include <SFML/Window/Mouse.hpp>
-
-#include "interop.hpp"
-
-#include <Wingdi.h>
 
 using namespace math;
 
@@ -53,8 +60,6 @@ static char *get_argument(int argc, char *argv[], const char *arg)
 
     return nullptr; /* Should not happen. */
 }
-
-GLuint tex;
 
 int main(int argc, char *argv[])
 {
@@ -138,7 +143,7 @@ void do_stuff(sf::Window &window, cl::ImageGL &image)
 
     cl::Program projection = projections::perspective();
     cl::Program subsampler = subsamplers::none();
-    cl::Program integrator = integrators::depth();
+    cl::Program integrator = integrators::ambient_occlusion();
 
     cl::Program geometry = scheduler::acquire("core/geometry");
     cl::Program frame_io = scheduler::acquire("core/frame_io");

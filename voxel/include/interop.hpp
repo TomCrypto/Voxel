@@ -30,8 +30,8 @@ namespace interop
 
     /** Creates an OpenGL texture mapped to an OpenCL image.
       *
-      * @param width  The width of the texture, in pixels.
-      * @param handle  The height of the texture, in pixels.
+      * @param width   The width of the texture, in pixels.
+      * @param height  The height of the texture, in pixels.
       *
       * @remarks Note the returned image is write-only to the CL context, so it
       *          must only be used for outputting the final render.

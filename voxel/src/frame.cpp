@@ -16,7 +16,7 @@ void Frame::next(void)
 {
     ++info.counter;
 
-    scheduler::write(frame_info, 0, sizeof(FrameInfo), &info, false);
+    scheduler::write(frame_info, 0, sizeof(FrameInfo), &info);
 }
 
 void Frame::bind_to(cl::Kernel &kernel)
@@ -27,7 +27,7 @@ void Frame::bind_to(cl::Kernel &kernel)
 
 void Frame::read(void *ptr)
 {
-    scheduler::read(frame_buffer, 0, info.width * info.height * 16, ptr, true);
+    scheduler::read(frame_buffer, 0, info.width * info.height * 16, ptr);
 }
 
 void Frame::clear(void)
