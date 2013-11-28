@@ -48,7 +48,7 @@ inline bool intersect(const distance3 &origin,
 
     math::float3 tmin = std::min(top, bot);
     math::float3 tmax = std::max(top, bot);
-    
+
     near = std::max(std::max(tmin.x, tmin.y), tmin.z);
     distance far = std::min(std::min(tmax.x, tmax.y), tmax.z);
 

@@ -50,9 +50,9 @@ namespace scheduler
 
     cl::ImageGL alloc_gl_image(cl_mem_flags flags, GLuint texture);
 
-    void clear_gl_image(cl::Image &image);
+    void clear_gl_image(cl::Image &image, size_t width, size_t height);
 
-    void clear_buffer(cl::Buffer &buffer);
+    void clear_buffer(cl::Buffer &buffer, size_t size);
 
     void acquireGL(const cl::Memory &object);
     void releaseGL(const cl::Memory &object);

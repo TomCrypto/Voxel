@@ -76,7 +76,7 @@ namespace math
                                  a.y * b,
                                  a.z * b);
         }
-        
+
         friend basic_vector3 operator /(const scalar &b,
                                         const basic_vector3 &a)
 		{
@@ -108,7 +108,7 @@ namespace math
                                  a.y / b.y,
                                  a.z / b.z);
         }
-        
+
         friend basic_vector3 operator -(const basic_vector3 &a)
         {
             return basic_vector3(-a.x,
@@ -121,7 +121,7 @@ namespace math
             x = b.x;
             y = b.y;
             z = b.z;
-            
+
             return *this;
         }
 	    basic_vector3 &operator +=(const basic_vector3 &b)
@@ -129,7 +129,7 @@ namespace math
             x += b.x;
             y += b.y;
             z += b.z;
-            
+
             return *this;
         }
 
@@ -138,7 +138,7 @@ namespace math
             x -= b.x;
             y -= b.y;
             z -= b.z;
-            
+
             return *this;
         }
 
@@ -147,7 +147,7 @@ namespace math
             x *= b;
             y *= b;
             z *= b;
-            
+
             return *this;
         }
 
@@ -156,7 +156,7 @@ namespace math
             x /= b;
             y /= b;
             z /= b;
-            
+
             return *this;
         }
 
@@ -165,7 +165,7 @@ namespace math
             x *= b.x;
             y *= b.y;
             z *= b.z;
-            
+
             return *this;
         }
 
@@ -174,7 +174,7 @@ namespace math
             x /= b.x;
             y /= b.y;
             z /= b.z;
-            
+
             return *this;
         }
 
@@ -223,9 +223,9 @@ namespace math
     }
 
     /** Calculates the length of a vector.
-      * 
+      *
       * @param a A vector to calculate the length of.
-      * 
+      *
       * @return The length of the vector \c a.
       *
       * @remarks The length is defined as the square root of the dot product of
@@ -245,7 +245,7 @@ namespace math
 	{
         return a / length(a);
     }
-    
+
     template <typename scalar>
     basic_vector3<scalar> cross(const basic_vector3<scalar> &a,
                                 const basic_vector3<scalar> &b)
@@ -278,25 +278,25 @@ namespace math
         basic_vector3()
             : sse(_mm_set_ps(0, 0, 0, 0))
         {
-            
+
         }
-        
+
 	    basic_vector3(const basic_vector3 &copy)
 		    : sse(copy.sse)
 		{
-		    
+
 		}
-		
+
 	    basic_vector3(float x, float y, float z)
 		    : sse(_mm_set_ps(0, z, y, x))
 		{
-		    
+
 		}
-		
+
         basic_vector3(const __m128& sse)
             : sse(sse)
         {
-            
+
         }
 
 	    friend basic_vector3 operator +(const basic_vector3 &a,
@@ -322,7 +322,7 @@ namespace math
 	    {
             return _mm_mul_ps(a.sse, _mm_set_ps(b, b, b, b));
         }
-        
+
         friend basic_vector3 operator /(float b,
                                         const basic_vector3 &a)
 	    {
@@ -340,13 +340,13 @@ namespace math
 	    {
             return _mm_mul_ps(a.sse, b.sse);
         }
-		
+
         friend basic_vector3 operator /(const basic_vector3 &a,
                                         const basic_vector3 &b)
 	    {
             return _mm_div_ps(a.sse, b.sse);
         }
-        
+
         friend basic_vector3 operator -(const basic_vector3 &a)
         {
             return _mm_sub_ps(_mm_set_ps(0, 0, 0, 0), a.sse);
@@ -435,14 +435,14 @@ namespace math
                      const basic_vector3<float> &b)
     {
         float result;
-    
+
         _mm_store_ss(&result, _mm_dp_ps(a.sse, b.sse, 0x77));
 
         return result;
     }
-    
+
     template <>
-    inline 
+    inline
     basic_vector3<float> cross<float>(const basic_vector3<float> &a,
                                       const basic_vector3<float> &b)
     {
@@ -474,7 +474,7 @@ namespace std
                                            min(a.y, b.y),
                                            min(a.z, b.z));
     }
-    
+
     template <typename scalar>
     math::basic_vector3<scalar> max(const math::basic_vector3<scalar> &a,
                                     const math::basic_vector3<scalar> &b)
@@ -483,7 +483,7 @@ namespace std
                                            max(a.y, b.y),
                                            max(a.z, b.z));
     }
-    
+
     template <>
     inline
     math::basic_vector3<float> min(const math::basic_vector3<float> &a,
@@ -491,7 +491,7 @@ namespace std
     {
         return math::basic_vector3<float>(_mm_min_ps(a.sse, b.sse));
     }
-    
+
     template <>
     inline
     math::basic_vector3<float> max(const math::basic_vector3<float> &a,

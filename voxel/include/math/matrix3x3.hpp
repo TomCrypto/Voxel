@@ -60,7 +60,7 @@ namespace math
             for (size_t i = 0; i < 3; ++i)
                 for (size_t j = 0; j < 3; ++j)
                     c[i][j] = dot(aT[i], b[j]);
-		
+
             return c;
 	    }
 

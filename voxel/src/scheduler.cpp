@@ -81,6 +81,8 @@ size_t scheduler::get_arg(const cl::Kernel &kernel,
                           const std::string &name)
 {
 #ifdef NO_ARGUMENT_LOOKUP
+    (void)kernel;
+
     if (name == "frm_data") return 0;
     if (name == "frm_info") return 1;
     if (name == "geometry") return 2;
@@ -123,12 +125,12 @@ cl::ImageGL scheduler::alloc_gl_image(cl_mem_flags flags, GLuint texture)
     return cl::ImageGL(context, flags, GL_TEXTURE_2D, 0, texture);
 }
 
-void scheduler::clear_gl_image(cl::Image &image)
+void scheduler::clear_gl_image(cl::Image &image, size_t width, size_t height)
 {
     cl_float4 u;
-    u.s[0] = 0.25;
-    u.s[1] = 0.75;
-    u.s[2] = 0.25;
+    u.s[0] = 0;
+    u.s[1] = 0;
+    u.s[2] = 0;
     u.s[3] = 0;
 
     cl::size_t<3> origin;
@@ -137,14 +139,14 @@ void scheduler::clear_gl_image(cl::Image &image)
     origin[2] = 0;
 
     cl::size_t<3> region;
-    region[0] = 512;
-    region[1] = 512;
+    region[0] = width;
+    region[1] = height;
     region[2] = 1;
 
     queue.enqueueFillImage(image, u, origin, region);
 }
 
-void scheduler::clear_buffer(cl::Buffer &buffer)
+void scheduler::clear_buffer(cl::Buffer &buffer, size_t size)
 {
     cl_float4 u;
     u.s[0] = 0;
@@ -152,7 +154,7 @@ void scheduler::clear_buffer(cl::Buffer &buffer)
     u.s[2] = 0;
     u.s[3] = 0;
 
-    queue.enqueueFillBuffer(buffer, u, 0, 512 * 512 * 16);
+    queue.enqueueFillBuffer(buffer, u, 0, size);
 }
 
 void scheduler::acquireGL(const cl::Memory &object)

@@ -32,5 +32,5 @@ void Frame::read(void *ptr)
 
 void Frame::clear(void)
 {
-    scheduler::clear_buffer(frame_buffer);
+    scheduler::clear_buffer(frame_buffer, info.width * info.height * 16);
 }

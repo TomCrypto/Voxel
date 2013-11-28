@@ -330,7 +330,7 @@ private:
         return false;
     }
 
-    void get_voxel_data(const math::basic_vector3<int> &min, const math::basic_vector3<int> &max, uint16_t &normal, uint16_t &material) const
+    void get_voxel_data(const math::basic_vector3<int> &min, const math::basic_vector3<int> &/*max*/, uint16_t &normal, uint16_t &material) const
         // TEMPORARY
     {
         /*int r = 10;

@@ -102,7 +102,7 @@ namespace math
                                  a.z / b.z,
                                  a.w / b.w);
         }
-        
+
         friend basic_vector4 operator -(const basic_vector4 &a)
         {
             return basic_vector4(-a.x,
@@ -117,7 +117,7 @@ namespace math
             y = b.y;
             z = b.z;
             w = b.w;
-            
+
             return *this;
         }
 	    basic_vector4 &operator +=(const basic_vector4 &b)
@@ -126,7 +126,7 @@ namespace math
             y += b.y;
             z += b.z;
             w += b.w;
-            
+
             return *this;
         }
 
@@ -136,7 +136,7 @@ namespace math
             y -= b.y;
             z -= b.z;
             w -= b.w;
-            
+
             return *this;
         }
 
@@ -146,7 +146,7 @@ namespace math
             y *= b;
             z *= b;
             w *= b;
-            
+
             return *this;
         }
 
@@ -156,7 +156,7 @@ namespace math
             y /= b;
             z /= b;
             w /= b;
-            
+
             return *this;
         }
 
@@ -166,7 +166,7 @@ namespace math
             y *= b.y;
             z *= b.z;
             w *= b.w;
-            
+
             return *this;
         }
 
@@ -176,7 +176,7 @@ namespace math
             y /= b.y;
             z /= b.z;
             w /= b.w;
-            
+
             return *this;
         }
 
@@ -263,25 +263,25 @@ namespace math
         basic_vector4()
             : sse(_mm_set_ps(0, 0, 0, 0))
         {
-            
+
         }
-        
+
 	    basic_vector4(const basic_vector4 &copy)
 		    : sse(copy.sse)
 		{
-		    
+
 		}
-		
+
 	    basic_vector4(float x, float y, float z, float w)
 		    : sse(_mm_set_ps(w, z, y, x))
 		{
-		    
+
 		}
-		
+
         basic_vector4(const __m128& sse)
             : sse(sse)
         {
-            
+
         }
 
 	    friend basic_vector4 operator +(const basic_vector4 &a,
@@ -319,13 +319,13 @@ namespace math
 	    {
             return _mm_mul_ps(a.sse, b.sse);
         }
-		
+
         friend basic_vector4 operator /(const basic_vector4 &a,
                                         const basic_vector4 &b)
 	    {
             return _mm_div_ps(a.sse, b.sse);
         }
-        
+
         friend basic_vector4 operator -(const basic_vector4 &a)
         {
             return _mm_sub_ps(_mm_set_ps(0, 0, 0, 0), a.sse);
@@ -416,7 +416,7 @@ namespace math
                      const basic_vector4<float> &b)
     {
         float result;
-    
+
         _mm_store_ss(&result, _mm_dp_ps(a.sse, b.sse, 0x77));
 
         return result;
@@ -437,7 +437,7 @@ namespace std
                                            min(a.z, b.z),
                                            min(a.w, b.w));
     }
-    
+
     template <typename scalar>
     math::basic_vector4<scalar> max(const math::basic_vector4<scalar> &a,
                                     const math::basic_vector4<scalar> &b)
@@ -447,7 +447,7 @@ namespace std
                                            max(a.z, b.z),
                                            max(a.w, b.w));
     }
-    
+
     template <>
     inline
     math::basic_vector4<float> min(const math::basic_vector4<float> &a,
@@ -455,7 +455,7 @@ namespace std
     {
         return math::basic_vector4<float>(_mm_min_ps(a.sse, b.sse));
     }
-    
+
     template <>
     inline
     math::basic_vector4<float> max(const math::basic_vector4<float> &a,

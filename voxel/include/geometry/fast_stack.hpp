@@ -3,7 +3,7 @@
 /** @file fast_stack.hpp
   *
   * @brief SVO Traversal Stack
-  * 
+  *
   * Implements a fast stack for SVO traversal. The stack has no bounds checking
   * whatsoever, and relies entirely on the correctness of the calling code.
 **/
@@ -89,7 +89,7 @@ struct traversal_stack
         /** Constructs a new stack and initializes it with a stack item.
           *
           * @remarks This is typically used for pushing the root node.
-          * 
+          *
           * @param offset  Offset for the first stack item.
           * @param cube    Bounding box for the stack item.
         **/
@@ -97,7 +97,7 @@ struct traversal_stack
         {
             push(stack_item(offset, cube));
         }
-    
+
         /** Gets the current position of the last element of the stack.
           *
           * @return The current number of elements in the stack.
@@ -106,7 +106,7 @@ struct traversal_stack
         {
             return pointer;
         }
-        
+
         /** Pops the last item off the stack.
           *
           * @return The top of the stack.
@@ -129,7 +129,7 @@ struct traversal_stack
             assert(pointer != capacity);
             stack[pointer++] = item;
         }
-        
+
         /** Checks whether the stack is empty.
           *
           * @return \c true if the stack is empty, \c false otherwise.
@@ -168,11 +168,11 @@ struct traversal_stack
             sort(start[2], start[3]);
             sort(start[1], start[2]);
         }
-    
+
     private:
         stack_item stack[capacity];
         size_t pointer = 0;
-        
+
         static inline void sort(stack_item &a, stack_item &b)
         {
             if (a.hit < b.hit)

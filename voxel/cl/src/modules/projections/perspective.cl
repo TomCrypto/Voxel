@@ -6,6 +6,7 @@ struct Ray project(constant struct OBSERVER *observer,
                    float u, float v, float ratio)
 {
     float3 origin = observer->pos;
+    u = u * ratio - (ratio - 1) * 0.5f;
 
     float3 dir = normalize(lerp(lerp(observer->plane[3], observer->plane[2], u),
                                 lerp(observer->plane[0], observer->plane[1], u), v));
