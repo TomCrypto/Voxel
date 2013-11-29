@@ -16,10 +16,10 @@
 #error "   Windows configuration and make everything work on Linux"
 */
 
-#include "devices.hpp"
-#include "display.hpp"
-#include "interop.hpp"
-#include "log.hpp"
+#include "setup/devices.hpp"
+#include "setup/interop.hpp"
+#include "gui/display.hpp"
+#include "gui/log.hpp"
 
 int main(int argc, char *argv[])
 {

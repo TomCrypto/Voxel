@@ -1,10 +1,9 @@
-#include "scheduler.hpp"
+#include "setup/scheduler.hpp"
+#include "gui/log.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
-#include "log.hpp"
 
 static cl::Device device;
 static cl::Context context;
@@ -77,8 +76,8 @@ cl::Kernel scheduler::get(const cl::Program &program,
     return cl::Kernel(program, name.c_str());
 }
 
-size_t scheduler::get_arg(const cl::Kernel &kernel,
-                          const std::string &name)
+std::size_t scheduler::get_arg(const cl::Kernel &kernel,
+                               const std::string &name)
 {
 #ifdef NO_ARGUMENT_LOOKUP
     (void)kernel;
@@ -90,17 +89,17 @@ size_t scheduler::get_arg(const cl::Kernel &kernel,
 
     if (name == "tex_data") return 2;
 #else
-    size_t num_args = kernel.getInfo<CL_KERNEL_NUM_ARGS>();
+    std::size_t num_args = kernel.getInfo<CL_KERNEL_NUM_ARGS>();
 
     try
     {
-        for (size_t t = 0; t < num_args; ++t)
+        for (std::size_t t = 0; t < num_args; ++t)
             if (kernel.getArgInfo<CL_KERNEL_ARG_NAME>(t) == name)
                 return t;
     }
     catch (const cl::Error &e)
     {
-        return (size_t)-1;
+        return (std::size_t)-1;
     }
 #endif
 
@@ -125,7 +124,7 @@ cl::ImageGL scheduler::alloc_gl_image(cl_mem_flags flags, GLuint texture)
     return cl::ImageGL(context, flags, GL_TEXTURE_2D, 0, texture);
 }
 
-void scheduler::clear_gl_image(cl::Image &image, size_t width, size_t height)
+void scheduler::clear_gl_image(cl::Image &image, std::size_t width, std::size_t height)
 {
     cl_float4 u;
     u.s[0] = 0;
@@ -146,7 +145,7 @@ void scheduler::clear_gl_image(cl::Image &image, size_t width, size_t height)
     queue.enqueueFillImage(image, u, origin, region);
 }
 
-void scheduler::clear_buffer(cl::Buffer &buffer, size_t size)
+void scheduler::clear_buffer(cl::Buffer &buffer, std::size_t size)
 {
     cl_float4 u;
     u.s[0] = 0;
@@ -170,19 +169,19 @@ void scheduler::releaseGL(const cl::Memory &object)
     queue.enqueueReleaseGLObjects(&obj);
 }
 
-cl::Buffer scheduler::alloc_buffer(size_t size, cl_mem_flags flags,
+cl::Buffer scheduler::alloc_buffer(std::size_t size, cl_mem_flags flags,
                                    void *ptr)
 {
     return cl::Buffer(context, flags, size, ptr);
 }
 
-void scheduler::write(const cl::Buffer &buffer, size_t offset, size_t size,
+void scheduler::write(const cl::Buffer &buffer, std::size_t offset, std::size_t size,
                       const void *ptr, bool blocking)
 {
     queue.enqueueWriteBuffer(buffer, blocking, offset, size, ptr);
 }
 
-void scheduler::read(const cl::Buffer &buffer, size_t offset, size_t size,
+void scheduler::read(const cl::Buffer &buffer, std::size_t offset, std::size_t size,
                      void *ptr, bool blocking)
 {
     queue.enqueueReadBuffer(buffer, blocking, offset, size, ptr);

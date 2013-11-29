@@ -23,15 +23,15 @@ namespace scheduler
     cl::Kernel get(const cl::Program &program,
                    const std::string &name);
 
-    size_t get_arg(const cl::Kernel &kernel,
+    std::size_t get_arg(const cl::Kernel &kernel,
                    const std::string &name);
 
     template <typename T>
     void set_arg(cl::Kernel &kernel, const std::string &name,
                  T value)
     {
-        size_t index = get_arg(kernel, name);
-        if (index == (size_t)-1)
+        std::size_t index = get_arg(kernel, name);
+        if (index == (std::size_t)-1)
             #ifndef NO_ARGUMENT_LOOKUP
             throw std::logic_error("OpenCL implementation does not appear "
                                    "to support kernel argument query, try "
@@ -50,19 +50,19 @@ namespace scheduler
 
     cl::ImageGL alloc_gl_image(cl_mem_flags flags, GLuint texture);
 
-    void clear_gl_image(cl::Image &image, size_t width, size_t height);
+    void clear_gl_image(cl::Image &image, std::size_t width, std::size_t height);
 
-    void clear_buffer(cl::Buffer &buffer, size_t size);
+    void clear_buffer(cl::Buffer &buffer, std::size_t size);
 
     void acquireGL(const cl::Memory &object);
     void releaseGL(const cl::Memory &object);
 
-    cl::Buffer alloc_buffer(size_t size, cl_mem_flags flags, void *ptr
+    cl::Buffer alloc_buffer(std::size_t size, cl_mem_flags flags, void *ptr
                             = nullptr);
 
-    void write(const cl::Buffer &buffer, size_t offset, size_t size,
+    void write(const cl::Buffer &buffer, std::size_t offset, std::size_t size,
                const void *ptr, bool blocking = false);
 
-    void read(const cl::Buffer &buffer, size_t offset, size_t size,
+    void read(const cl::Buffer &buffer, std::size_t offset, std::size_t size,
               void *ptr, bool blocking = false);
 };

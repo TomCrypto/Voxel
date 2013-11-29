@@ -1,6 +1,6 @@
 #include "frame.hpp"
 
-Frame::Frame(size_t width, size_t height)
+Frame::Frame(std::size_t width, std::size_t height)
 {
     info.width = width;
     info.height = height;

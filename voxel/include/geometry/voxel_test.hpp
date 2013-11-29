@@ -119,7 +119,7 @@ public:
 	    free_mem();
 	}
 
-	size_t bufSize()
+	std::size_t bufSize()
 	{
 	    return node_offset * sizeof(Node);
 	}
@@ -219,9 +219,9 @@ private:
                 }
                 else
                 {
-                    size_t last = stack.position();
+                    std::size_t last = stack.position();
                     auto current = nodes[s.offset];
-                    for (size_t t = 0; t < 8; ++t)
+                    for (std::size_t t = 0; t < 8; ++t)
                     {
                         uint32_t child = current.child[t];
                         if (child == 0x00000000) continue;
@@ -449,7 +449,7 @@ private:
     #define NODE_MEMORY (1024 * 1024 * 1024)
 
     Node *nodes;
-    size_t node_offset;
+    std::size_t node_offset;
 
     void init_mem()
     {

@@ -10,7 +10,7 @@
 #include <CL/cl.hpp>
 #include <stdexcept>
 
-#include "scheduler.hpp"
+#include "setup/scheduler.hpp"
 
 /** @namespace integrators
   *

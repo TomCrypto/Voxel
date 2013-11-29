@@ -12,7 +12,7 @@
 #include <cstddef>
 #include <string>
 
-#include "scheduler.hpp"
+#include "setup/scheduler.hpp"
 
 /** @namespace subsamplers
   *
@@ -24,8 +24,8 @@ namespace subsamplers
 {
     namespace details
     {
-        template <size_t base>
-        float halton(size_t index)
+        template <std::size_t base>
+        float halton(std::size_t index)
         {
             float f = 1.0f / base;
             float result = 0;
@@ -57,14 +57,14 @@ namespace subsamplers
       *          noise over \f$n\f$ samples at a rate of \f$O(n)\f$, instead of
       *          \f$O(\sqrt{n})\f$.
     **/
-    template <size_t order, size_t bA = 2, size_t bB = 3>
+    template <std::size_t order, std::size_t bA = 2, std::size_t bB = 3>
     inline cl::Program low_discrepancy(void)
     {
         static_assert(order > 0, "Subsamplers cannot have order zero.");
         std::string def = "-D ORDER=" + std::to_string(order);
         std::string prefix = "#define SAMPLES ";
 
-        for (size_t t = 0; t < order; ++t)
+        for (std::size_t t = 0; t < order; ++t)
         {
             float dx = details::halton<bA>(t) - 0.5f; // x-dimension offset
             float dy = details::halton<bB>(t) - 0.5f; // y-dimension offset

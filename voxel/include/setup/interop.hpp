@@ -36,7 +36,7 @@ namespace interop
       * @remarks Note the returned image is write-only to the CL context, so it
       *          must only be used for outputting the final render.
     **/
-    cl::ImageGL get_image(size_t width, size_t height);
+    cl::ImageGL get_image(std::size_t width, std::size_t height);
 
     /** Frees the OpenCL image and the underlying OpenGL texture (this does not
       * release the OpenCL environment, and is meant for clean shutdown only).

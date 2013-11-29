@@ -1,7 +1,7 @@
-#include "interop.hpp"
+#include "setup/scheduler.hpp"
+#include "setup/interop.hpp"
 
 #include <SFML/OpenGL.hpp>
-#include "scheduler.hpp"
 
 #if defined _WIN32 || defined _WIN64
     #include <Wingdi.h>
@@ -27,7 +27,7 @@ void interop::initialize(const cl::Device &device, sf::WindowHandle handle)
 #endif
 }
 
-cl::ImageGL interop::get_image(size_t width, size_t height)
+cl::ImageGL interop::get_image(std::size_t width, std::size_t height)
 {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);

@@ -1,12 +1,13 @@
-#include "display.hpp"
-#include "misc/icon.h"
+#include "external/icon.h"
+#include "gui/display.hpp"
+#include "gui/atb.hpp"
 
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/Window.hpp>
 #include <cstddef>
 
-#include "scheduler.hpp"
-#include "interop.hpp"
+#include "setup/scheduler.hpp"
+#include "setup/interop.hpp"
 
 #include "frame.hpp"
 
@@ -17,8 +18,6 @@
 #include "projections/generic.hpp"
 
 #include "geometry/voxel_test.hpp"
-
-#include "atb.hpp"
 
 using namespace math;
 using std::unique_ptr;

@@ -2,7 +2,7 @@
 
 #include <CL/cl.hpp>
 
-#include "scheduler.hpp"
+#include "setup/scheduler.hpp"
 
 #include "math/vector4.hpp"
 #include "math/vector3.hpp"

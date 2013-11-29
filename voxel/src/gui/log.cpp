@@ -1,6 +1,5 @@
-#include "log.hpp"
-
-#include "rlutil.h"
+#include "external/rlutil.h"
+#include "gui/log.hpp"
 
 using namespace rlutil;
 using std::exception;

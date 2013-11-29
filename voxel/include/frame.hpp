@@ -4,7 +4,7 @@
 
 #include <CL/cl.hpp>
 
-#include "scheduler.hpp"
+#include "setup/scheduler.hpp"
 
 struct FrameInfo
 {
@@ -15,7 +15,7 @@ struct FrameInfo
 class Frame
 {
     public:
-        Frame(size_t width, size_t height);
+        Frame(std::size_t width, std::size_t height);
 
         void next();
 

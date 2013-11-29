@@ -1,4 +1,4 @@
-#include "atb.hpp"
+#include "gui/atb.hpp"
 
 #include <stdexcept>
 #include <cstring>
@@ -9,6 +9,8 @@
 #include "subsamplers/generic.hpp"
 #include "projections/generic.hpp"
 #include "integrators/generic.hpp"
+
+using std::unique_ptr;
 
 static TwType subsamplers_t;
 static TwType projections_t;
@@ -94,7 +96,7 @@ struct Variable
         }
 };
 
-static std::map<std::string, std::unique_ptr<Variable>> variables;
+static std::map<std::string, unique_ptr<Variable>> variables;
 
 void TW_CALL set_cb(const void *value, void *id)
 {
@@ -137,7 +139,7 @@ void atb::initialize(const char *bar_title)
     define_types();
 }
 
-void atb::window_resize(size_t width, size_t height)
+void atb::window_resize(std::size_t width, std::size_t height)
 {
     if (!TwWindowSize(width, height))
         throw std::runtime_error("Failed to update TweakBar dimensions");
@@ -146,8 +148,8 @@ void atb::window_resize(size_t width, size_t height)
 void atb::add_var(const char *id, const char *name, TwType type,
                   const char *options)
 {
-    auto variable = std::unique_ptr<Variable>(new Variable(id, name, type, options));
-    variables.insert(std::make_pair(id, std::move(variable)));
+    auto var = unique_ptr<Variable>(new Variable(id, name, type, options));
+    variables.insert(std::make_pair(id, std::move(var)));
 }
 
 bool atb::has_changed(const char *id)

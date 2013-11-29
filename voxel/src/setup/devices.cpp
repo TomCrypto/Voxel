@@ -1,7 +1,6 @@
-#include "devices.hpp"
-
-#include "rlutil.h"
-#include "log.hpp"
+#include "external/rlutil.h"
+#include "setup/devices.hpp"
+#include "gui/log.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -57,7 +56,7 @@ static bool starts_with(const string &s, const string &p)
     return !strncmp(p.c_str(), s.c_str(), p.length());
 }
 
-static size_t parse_int(const string &s)
+static std::size_t parse_int(const string &s)
 {
     try
     {
@@ -65,7 +64,7 @@ static size_t parse_int(const string &s)
     }
     catch (...)
     {
-        return (size_t)-1;
+        return (std::size_t)-1;
     }
 }
 
@@ -160,8 +159,9 @@ static bool is_valid_device(const cl::Device &device)
  * device matches this ID (only one device should ever match it).             */
 static bool check_device(const cl::Platform &platform,
                          const cl::Device &device,
-                         size_t p_id, size_t d_id,
-                         const string &name)
+                         const string &name,
+                         std::size_t p_id,
+                         std::size_t d_id)
 {
     if (name.length() < 2) return false;
 
@@ -177,7 +177,7 @@ static bool check_device(const cl::Platform &platform,
     }
 }
 
-static void print_device_id(size_t p_id, size_t d_id)
+static void print_device_id(std::size_t p_id, std::size_t d_id)
 {
     cout << "cl/" << p_id << ":" << d_id;
 }
@@ -219,7 +219,8 @@ static void print_device_name(const cl::Platform &platform,
 
 static void print_device(const cl::Platform &platform,
                          const cl::Device &device,
-                         size_t p_id, size_t d_id)
+                         std::size_t p_id,
+                         std::size_t d_id)
 {
     setColor(is_valid_device(device) ? GREEN : RED);
     print_device_id(p_id, d_id);
@@ -254,8 +255,8 @@ bool print_devices(void)
 
         for (auto d = devices.begin(); d != devices.end(); ++d)
         {
-            size_t p_id = p - platforms.begin();
-            size_t d_id = d - devices.begin();
+            std::size_t p_id = p - platforms.begin();
+            std::size_t d_id = d - devices.begin();
             print_device(*p, *d, p_id, d_id);
         }
     }
@@ -274,8 +275,9 @@ bool select_device(string name, cl::Device &device)
 
         for (auto d = devices.begin(); d != devices.end(); ++d)
         {
-            size_t p_id = p - platforms.begin(), d_id = d - devices.begin();
-            if (check_device(*p, *d, p_id, d_id, trim(name)))
+            std::size_t p_id = p - platforms.begin();
+            std::size_t d_id = d - devices.begin();
+            if (check_device(*p, *d, trim(name), p_id, d_id))
             {
                 print_selected_device(*p, *d);
                 if (!is_valid_device(*d))
