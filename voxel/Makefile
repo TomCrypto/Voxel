@@ -7,19 +7,54 @@ CPP_DIR = src/
 HPP_DIR = include/
 DOC_DIR = doc/
 
+# Define some library/header paths if needed. Note: this is probably not needed
+# if you are on Linux as the $PATH will contain these by convention, but if you
+# are on Windows you may not have (or be able to do) this, so here you have the
+# option of specifying hardcoded paths to dynamic libraries and headers - below
+# is a template using the settings of my Windows box. SFML version 2.1, please!
+
+OPENCL_HDR = -I"C:/Program Files (x86)/AMD APP SDK/2.9/include"
+OPENCL_LIB = -L"C:/Program Files (x86)/AMD APP SDK/2.9/bin/x86_64"
+
+SFML_HDR   = -I"C:/SFML-2.1/include"
+SFML_LIB   = -L"C:/SFML-2.1/lib"
+
+ATB_HDR    = -I"C:/AntTweakBar/include"
+ATB_LIB    = -L"C:/AntTweakBar/lib"
+
+# If you are on a system with poor (or no) library versioning, you must provide
+# the correct name of the library to link to (e.g. 32/64-bit) - we will attempt
+# to autodetect it for you, but you may need to override this if it goes wrong.
+
+ifeq ($(OS),Windows_NT)
+    GL_LIB_NAME = opengl32
+    TEST_ARCH = $(or $(ifeq $(PROCESSOR_ARCHITECTURE),AMD64),\
+                     $(ifeq $(PROCESSOR_ARCHITEW6432),AMD64))
+    ifeq ($(TEST_ARCH),)
+        ATB_LIB_NAME = AntTweakBar64 # This is 64-bit Windows
+	else
+        ATB_LIB_NAME = AntTweakBar   # This is 32-bit Windows
+    endif
+else                                 # This is not Windows...
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)          # This is probably Linux
+        ATB_LIB_NAME = AntTweakBar
+        GL_LIB_NAME = GL
+    endif
+endif
+
 # Define the default compiler settings
 
 CXX ?= clang++
 
-CXXFLAGS = -O3 -march=native -std=c++11 \
-           -Wall -Wextra \
+CXXFLAGS = -O3 -march=native -std=c++11 -Wall -Wextra \
+		   $(OPENCL_HDR) $(SFML_HDR) $(ATB_HDR) \
            -D__CL_ENABLE_EXCEPTIONS \
-           -I"C:/Program Files (x86)/AMD APP SDK/2.9/include" \
-           -I"C:/SFML-2.1/include" \
-           -I"C:/AntTweakBar/include" \
-           -DNO_ARGUMENT_LOOKUP
+           #-DNO_ARGUMENT_LOOKUP
 
-LDFLAGS = -L"C:/Program Files (x86)/AMD APP SDK/2.9/bin/x86_64" -L"C:/SFML-2.1/lib" -L"C:/AntTweakBar/lib" -lsfml-graphics -lsfml-window -lsfml-system -lopengl32 -lOpenCL -lAntTweakBar64
+LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system \
+          -lOpenCL -l$(GL_LIB_NAME) -l$(ATB_LIB_NAME) \
+          $(OPENCL_LIB) $(SFML_LIB) $(ATB_LIB)
 
 # Locate relevant source files, headers, and destination .obj's
 
@@ -70,5 +105,3 @@ clean_doc:
 
 .PHONY: clean
 clean: clean_bin clean_obj clean_doc
-	
-
