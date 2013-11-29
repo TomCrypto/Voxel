@@ -1,10 +1,12 @@
 # Compiled Object files
+*.obj
 *.slo
 *.lo
 *.o
 
 # Compiled Dynamic libraries
 *.so
+*.dll
 *.dylib
 
 # Compiled Static libraries
@@ -23,17 +25,7 @@ doc/
 *~
 *.swp*
 
-*.bmp
-*.ppm
-*.hdr
-*.pic
-*.png
-
 *.ipch
-
-*.user
-*.tlog
-*.obj
 
 *.cbp
 *.layout
