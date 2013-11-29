@@ -362,31 +362,43 @@ private:
 
     Voxel ***data;
 
-    void alloc_data()
+    Voxel*** alloc_ptr()
     {
-        data = new Voxel**[RESOLUTION];
+        Voxel*** ptr = new Voxel**[RESOLUTION];
 
         for (int x = 0; x < RESOLUTION; ++x)
         {
-            data[x] = new Voxel*[RESOLUTION];
+            ptr[x] = new Voxel*[RESOLUTION];
 
             for (int y = 0; y < RESOLUTION; ++y)
             {
-                data[x][y] = new Voxel[RESOLUTION];
+                ptr[x][y] = new Voxel[RESOLUTION];
             }
         }
+
+        return ptr;
+    }
+
+    void free_ptr(Voxel*** ptr)
+    {
+        for (int x = 0; x < RESOLUTION; ++x)
+            for (int y = 0; y < RESOLUTION; ++y)
+                delete[] ptr[x][y];
+
+        for (int x = 0; x < RESOLUTION; ++x)
+            delete[] ptr[x];
+
+        delete[] ptr;
+    }
+
+    void alloc_data()
+    {
+        data = alloc_ptr();
     }
 
     void free_mem()
     {
-        for (int x = 0; x < RESOLUTION; ++x)
-            for (int y = 0; y < RESOLUTION; ++y)
-                delete[] data[x][y];
-
-        for (int x = 0; x < RESOLUTION; ++x)
-            delete[] data[x];
-
-        delete[] data;
+        free_ptr(data);
     }
 
     void clear_data()
@@ -399,6 +411,8 @@ private:
 
     void filter_data()
     {
+        Voxel*** tmp = alloc_ptr();
+
         for (int x = 1; x < RESOLUTION - 1; ++x)
             for (int y = 1; y < RESOLUTION - 1; ++y)
                 for (int z = 1; z < RESOLUTION - 1; ++z)
@@ -410,9 +424,16 @@ private:
                      && (data[x][y][z - 1].material != 0xFFFF)
                      && (data[x][y][z + 1].material != 0xFFFF))
                     {
-                        data[x][y][z].material = 0xFFFF;
+                        tmp[x][y][z].material = 0xFFFF;
                     }
                 }
+
+        for (int x = 1; x < RESOLUTION - 1; ++x)
+            for (int y = 1; y < RESOLUTION - 1; ++y)
+                for (int z = 1; z < RESOLUTION - 1; ++z)
+                    data[x][y][z].material = 0xFFFF - tmp[x][y][z].material; // wtf??
+
+        free_ptr(tmp);
     }
 
     void gen_data()
