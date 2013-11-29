@@ -6,20 +6,19 @@
 #include <SFML/Window.hpp>
 #include <cstddef>
 
-#include "setup/scheduler.hpp"
+#include "setup/scheduler.hpp" // to move to renderer
 #include "setup/interop.hpp"
 
-#include "frame.hpp"
+#include "frame.hpp" // to move to renderer
 
-#include "observer.hpp"
+#include "observer.hpp" // to move to renderer
 
 #include "integrators/generic.hpp"
 #include "subsamplers/generic.hpp"
 #include "projections/generic.hpp"
 
-#include "geometry/voxel_test.hpp"
+#include "geometry/voxel_test.hpp" // to move to renderer
 
-using namespace math;
 using std::unique_ptr;
 
 static const std::size_t initial_w = 512, initial_x = 200;
@@ -255,6 +254,8 @@ static void do_stuff(sf::Window &window)
 
 void display::run(unique_ptr<sf::Window> &window)
 {
+    // put the actual event loop (with simple renderer calls) here later on
+
     do_stuff(*window);
 }
 

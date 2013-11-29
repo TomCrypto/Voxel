@@ -45,9 +45,11 @@ namespace atb
     /** Adds a variable to the tweak bar.
       *
       * @param id      The variable ID (used to refer to it, must be unique).
-      * @param name    The variable name, as displayed in the tweak bar.
-      * @param type    The variable type.
+      * @param name    The variable name, as displayed inside the tweak bar.
+      * @param type    The variable type (see AntTweakBar documentation).
       * @param options Additional AntTweakBar options.
+      *
+      * @remarks Not all types are supported, only the most common.
     **/
     void add_var(const char *id, const char *name, TwType type,
                  const char *options = "");

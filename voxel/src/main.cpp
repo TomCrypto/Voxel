@@ -11,8 +11,9 @@
 /*
 #error "TODO (ideas so far, non-exhaustive):"
 #error "1. clean up observer and frame"
-#error "2. try and see if integrating ATB is feasible"
-#error "3. once platform-specific stuff is working, fix makefile to have a"
+#error "2. implement smooth keyboard using SFML keyboard class"
+#error "3. separate rendering from display, and pass it to the display"
+#error "4. once platform-specific stuff is working, fix makefile to have a"
 #error "   Windows configuration and make everything work on Linux"
 */
 
@@ -75,8 +76,8 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
-    printf("Usage:\n\t%s %s [name]", argv[0], "--use-device");
+    printf("Usage:\n\n\t%s %s [name]", argv[0], "--use-device");
     printf(      "\n\t%s %s\n", argv[0], "--list-devices");
     printf("\nThis software requires OpenCL 1.2.\n");
-    return EXIT_FAILURE; // Argument parsing error.
+    return EXIT_FAILURE; // Argument parsing error
 }

@@ -1,6 +1,7 @@
 #include "gui/atb.hpp"
 
 #include <stdexcept>
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <memory>
@@ -32,7 +33,13 @@ struct Variable
 
         union
         {
+            bool v_bool;
+            int32_t v_int;
+            uint32_t v_uint;
             float v_float;
+            float v_color3f[3];
+            float v_color4f[4];
+            float v_dir3f[3];
             integrators::generic v_integrator;
             subsamplers::generic v_subsampler;
             projections::generic v_projection;
@@ -40,8 +47,20 @@ struct Variable
 
         std::size_t get_type_size(TwType type)
         {
+            if (type == TW_TYPE_BOOLCPP)
+                return sizeof(data.v_bool);
+            if (type == TW_TYPE_INT32)
+                return sizeof(data.v_int);
+            if (type == TW_TYPE_UINT32)
+                return sizeof(data.v_uint);
             if (type == TW_TYPE_FLOAT)
                 return sizeof(data.v_float);
+            if (type == TW_TYPE_COLOR3F)
+                return sizeof(data.v_color3f);
+            if (type == TW_TYPE_COLOR4F)
+                return sizeof(data.v_color4f);
+            if (type == TW_TYPE_DIR3F)
+                return sizeof(data.v_dir3f);
             if (type == atb::integrators())
                 return sizeof(data.v_integrator);
             if (type == atb::subsamplers())
@@ -79,6 +98,7 @@ struct Variable
         void get_var(void *ptr)
         {
             memcpy(ptr, &data, size);
+            this->changed = false;
         }
 
         void set_var(const void *ptr)
@@ -98,14 +118,23 @@ struct Variable
 
 static std::map<std::string, unique_ptr<Variable>> variables;
 
+static unique_ptr<Variable> &get_variable(const char *id)
+{
+    auto var = variables.find(id);
+    if (var == variables.end())
+        throw std::logic_error("Variable '" + std::string(id) + "' not found");
+
+    return var->second;
+}
+
 void TW_CALL set_cb(const void *value, void *id)
 {
-    variables[(char*)id]->set_var(value);
+    get_variable((char*)id)->set_var(value);
 }
 
 void TW_CALL get_cb(void *value, void *id)
 {
-    variables[(char*)id]->get_var(value);
+    get_variable((char*)id)->get_var(value);
 }
 
 static void define_types(void)
@@ -154,18 +183,17 @@ void atb::add_var(const char *id, const char *name, TwType type,
 
 bool atb::has_changed(const char *id)
 {
-    return variables[id]->changed;
+    return get_variable(id)->changed;
 }
 
 const void *atb::read_var(const char *id)
 {
-    variables[id]->changed = false;
-    return variables[id]->get_var();
+    return get_variable(id)->get_var();
 }
 
 void atb::write_var(const char *id, const void *ptr)
 {
-    variables[id]->set_var(ptr);
+    get_variable(id)->set_var(ptr);
 }
 
 bool atb::handle_event(sf::Event &event)
