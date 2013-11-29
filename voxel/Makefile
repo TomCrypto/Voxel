@@ -48,7 +48,7 @@ endif
 CXX ?= clang++
 
 CXXFLAGS = -O3 -march=native -std=c++11 -Wall -Wextra \
-		   $(OPENCL_HDR) $(SFML_HDR) $(ATB_HDR) \
+           $(OPENCL_HDR) $(SFML_HDR) $(ATB_HDR) \
            -D__CL_ENABLE_EXCEPTIONS \
            #-DNO_ARGUMENT_LOOKUP
 
