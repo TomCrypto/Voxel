@@ -65,6 +65,11 @@ int main(int argc, char *argv[])
             print_exception("A fatal error occurred", e);
             return EXIT_FAILURE; // Not an OpenCL error..
         }
+        catch (...)
+        {
+            print_error("Caught unhandled exception.");
+            return EXIT_FAILURE; // Here, just abort
+        }
 
         print_info("Exiting");
         return EXIT_SUCCESS;

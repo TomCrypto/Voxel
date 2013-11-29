@@ -16,9 +16,10 @@ CXXFLAGS = -O3 -march=native -std=c++11 \
            -D__CL_ENABLE_EXCEPTIONS \
            -I"C:/Program Files (x86)/AMD APP SDK/2.9/include" \
            -I"C:/SFML-2.1/include" \
+           -I"C:/AntTweakBar/include" \
            -DNO_ARGUMENT_LOOKUP
 
-LDFLAGS = -L"C:/Program Files (x86)/AMD APP SDK/2.9/bin/x86_64" -L"C:/SFML-2.1/lib" -lsfml-graphics -lsfml-window -lsfml-system -lopengl32 -lOpenCL
+LDFLAGS = -L"C:/Program Files (x86)/AMD APP SDK/2.9/bin/x86_64" -L"C:/SFML-2.1/lib" -L"C:/AntTweakBar/lib" -lsfml-graphics -lsfml-window -lsfml-system -lopengl32 -lOpenCL -lAntTweakBar64
 
 # Locate relevant source files, headers, and destination .obj's
 

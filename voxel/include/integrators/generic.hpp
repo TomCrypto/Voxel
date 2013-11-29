@@ -1,32 +1,62 @@
 #pragma once
 
 /** @file integrators/generic.hpp
-  * 
+  *
   * @brief Generic Integrators
   *
-  * Provides access to the most common integrators. 
+  * Provides access to the most common integrators.
 **/
 
 #include <CL/cl.hpp>
+#include <stdexcept>
 
 #include "scheduler.hpp"
 
 /** @namespace integrators
-  * 
+  *
   * @brief Namespace for the integrators.
   *
   * @see include/modules/integrator.cl
 **/
 namespace integrators
 {
-    cl::Program depth(void)
+    inline cl::Program depth(void)
     {
         return scheduler::acquire("modules/integrators/depth");
     }
 
-    cl::Program ambient_occlusion(void)
+    inline cl::Program ambient_occlusion(void)
     {
         return scheduler::acquire("modules/integrators/ao");
+    }
+
+    /**************************************************************************/
+
+    /** @enum generic
+      *
+      * Defines some generic, fully qualified integrators.
+    **/
+    enum generic
+    {
+        DEPTH,
+        AO
+    };
+
+    /** Returns the integrator corresponding to a \c generic enum value.
+      *
+      * @param integrator  Enum value.
+      *
+      * @return The integrator program.
+    **/
+    inline cl::Program get_generic(const generic &integrator)
+    {
+        switch (integrator)
+        {
+            case DEPTH: return depth();
+            case AO: return ambient_occlusion();
+        }
+
+        throw std::logic_error("Unknown integrator");
     }
 
     #if 0
@@ -44,7 +74,7 @@ namespace integrators
             case 5: return math::float3(0.75, 0.75, 0.25);
             case 6: return math::float3(0.25, 0.75, 0.75);
         }
-        
+
         return math::float3(0, 0, 0);
     }
 
@@ -89,7 +119,7 @@ namespace integrators
 	        return math::float3(0, 0, 0);
 	    }
     }
-    
+
     inline math::float3 saturate(const math::float3 &x)
     {
         return std::min(math::float3(1, 1, 1),
@@ -113,17 +143,17 @@ namespace integrators
 	    {
 	        math::float3 rgb = decode_material(contact.material);
 	        math::float3 normal = decode_normal(contact.normal);
-	    
+
 	        // compute hit point (push back outside the object a little)
 	        math::float3 hit = origin + direction * distance
                              + 1e-5f * normal;
 
 	        const float ambient = 0.25f;
-	        
+
 	        math::float3 dir_to_light = geometry.light() - hit;
 	        float distance_to_light = length(dir_to_light);
 	        dir_to_light /= distance_to_light;
-	        
+
 	        if (geometry.occludes(hit, dir_to_light, distance_to_light))
             {
                 return saturate(ambient * rgb); // light is occluded
@@ -133,14 +163,14 @@ namespace integrators
                 float NdotL = dot(normal, dir_to_light);
                 float falloff = pow(distance_to_light, 2) * 8.5f;
 	            float diffuse = std::max(0.0f, NdotL) / falloff;
-	            
+
 	            return saturate((ambient + diffuse) * rgb);
 	        }
-		
+
         }
 	    else return math::float3(0, 0, 0); // no intersection
     }
-    
+
     /** Performs an occlusion test and returns white if an object is hit, black
       * otherwise (occlusion map).
     **/
@@ -159,6 +189,6 @@ namespace integrators
 	        return math::float3(0, 0, 0);
 	    }
     }
-    
+
     #endif
 };

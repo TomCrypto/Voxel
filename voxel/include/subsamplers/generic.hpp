@@ -8,6 +8,7 @@
 **/
 
 #include <CL/cl.hpp>
+#include <stdexcept>
 #include <cstddef>
 #include <string>
 
@@ -40,6 +41,14 @@ namespace subsamplers
         }
     };
 
+    /** Generates only a single sampling point: this corresponds to the trivial
+      * subsampler, which is the fastest but generally results in aliasing.
+    **/
+    inline cl::Program none(void)
+    {
+        return scheduler::acquire("modules/subsamplers/none");
+    }
+
     /** Generates low-discrepancy sample points, using a quasi-random sequence,
       * such as a Halton sequence, providing good and fast sampling quality and
       * little noise.
@@ -49,7 +58,7 @@ namespace subsamplers
       *          \f$O(\sqrt{n})\f$.
     **/
     template <size_t order, size_t bA = 2, size_t bB = 3>
-    cl::Program low_discrepancy(void)
+    inline cl::Program low_discrepancy(void)
     {
         static_assert(order > 0, "Subsamplers cannot have order zero.");
         std::string def = "-D ORDER=" + std::to_string(order);
@@ -67,11 +76,36 @@ namespace subsamplers
                                   def, prefix);
     }
 
-    /** Generates only a single sampling point: this corresponds to the trivial
-      * subsampler, which is the fastest but generally results in aliasing.
+    /**************************************************************************/
+
+    /** @enum generic
+      *
+      * Defines some generic, fully qualified subsamplers.
     **/
-    cl::Program none(void)
+    enum generic
     {
-        return scheduler::acquire("modules/subsamplers/none");
+        NONE,                                    // No subsampler (default)
+        AAx2,                                    // 2xAA (low_discrepancy)
+        AAx4,                                    // 4xAA (low_discrepancy)
+        AAx8,                                    // 8xAA (low_discrepancy)
+    };
+
+    /** Returns the subsampler corresponding to a \c generic enum value.
+      *
+      * @param subsampler  Enum value.
+      *
+      * @return The subsampler program.
+    **/
+    inline cl::Program get_generic(const generic &subsampler)
+    {
+        switch (subsampler)
+        {
+            case NONE: return none();
+            case AAx2: return low_discrepancy<2>();
+            case AAx4: return low_discrepancy<4>();
+            case AAx8: return low_discrepancy<8>();
+        }
+
+        throw std::logic_error("Unknown subsampler");
     }
 };
