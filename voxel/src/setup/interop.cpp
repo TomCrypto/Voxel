@@ -5,6 +5,8 @@
 
 #if defined _WIN32 || defined _WIN64
     #include <Wingdi.h>
+#elif defined __linux__
+    #include <GL/glx.h>
 #endif
 
 static GLuint texture;
@@ -21,9 +23,16 @@ void interop::initialize(const cl::Device &device, sf::WindowHandle handle)
 
     scheduler::setup(device, props);
 #elif defined __linux__
-    #error "Linux interop support not implemented yet!"
+    cl_context_properties props[] =
+    {
+       CL_GL_CONTEXT_KHR,(cl_context_properties)glXGetCurrentContext(),
+       CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
+       0
+    };
+
+    scheduler::setup(device, props);
 #else
-    #error "Platform not supported!"
+    #error "Interop not supported for your platform!"
 #endif
 }
 
