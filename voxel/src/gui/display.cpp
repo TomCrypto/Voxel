@@ -51,7 +51,11 @@ unique_ptr<sf::Window> display::initialize(const std::string &name)
 
 static void do_stuff(sf::Window &window)
 {
-    bool relink = false;
+    // start is a hack so that everything is initialized before rendering
+    // begins (previously assumed that the window resize event would be fired
+    // immediately thereby allocating all resources, but this is not the case
+    // on all operating systems)
+    bool relink = false, start = true;
 
     // following code belongs somewhere else (renderer class?)
 
@@ -135,12 +139,15 @@ static void do_stuff(sf::Window &window)
                 }
             }
 
-            if (event.type == sf::Event::Resized)
+            if ((event.type == sf::Event::Resized) || start)
             {
-                atb::window_resize(window.getSize().x, window.getSize().y);
-                frame = Frame(event.size.width, event.size.height);
+                int x = start ? initial_w : window.getSize().x;
+                int y = start ? initial_h : window.getSize().y;
+
+                atb::window_resize(x, y);
+                frame = Frame(x, y);
                 interop::free_image(image);
-                image = interop::get_image(event.size.width, event.size.height);
+                image = interop::get_image(x, y);
                 frame.clear();
             }
 
@@ -184,21 +191,21 @@ static void do_stuff(sf::Window &window)
             }
         }
 
-        if (atb::has_changed("integrator"))
+        if (atb::has_changed("integrator") || start)
         {
             auto value = atb::get_var<integrators::generic>("integrator");
             integrator = integrators::get_generic(value);
             relink = true;
         }
 
-        if (atb::has_changed("subsampler"))
+        if (atb::has_changed("subsampler") || start)
         {
             auto value = atb::get_var<subsamplers::generic>("subsampler");
             subsampler = subsamplers::get_generic(value);
             relink = true;
         }
 
-        if (atb::has_changed("projection"))
+        if (atb::has_changed("projection") || start)
         {
             auto value = atb::get_var<projections::generic>("projection");
             projection = projections::get_generic(value);
@@ -222,6 +229,7 @@ static void do_stuff(sf::Window &window)
             buf2tex = scheduler::get(linked, "buf2tex");
             frame.clear();
             relink = false;
+            start = false;
         }
 
         frame.next();
