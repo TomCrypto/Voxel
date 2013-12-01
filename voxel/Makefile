@@ -10,17 +10,16 @@ DOC_DIR = doc/
 # Define some library/header paths if needed. Note: this is probably not needed
 # if you are on Linux as the $PATH will contain these by convention, but if you
 # are on Windows you may not have (or be able to do) this, so here you have the
-# option of specifying hardcoded paths to dynamic libraries and headers - below
-# is a template using the settings of my Windows box. SFML version 2.1, please!
+# option of specifying hardcoded paths to dynamic libraries and headers.
 
-OPENCL_HDR = -I"C:/Program Files (x86)/AMD APP SDK/2.9/include"
-OPENCL_LIB = -L"C:/Program Files (x86)/AMD APP SDK/2.9/bin/x86_64"
+OPENCL_HDR = #-I"/path/to/OpenCL-1.2/include"
+OPENCL_LIB = #-L"/path/to/OpenCL-1.2/lib"
 
-SFML_HDR   = -I"C:/SFML-2.1/include"
-SFML_LIB   = -L"C:/SFML-2.1/lib"
+SFML_HDR   = #-I"/path/to/SFML-2.1/include"
+SFML_LIB   = #-L"/path/to/SFML-2.1/lib"
 
-ATB_HDR    = -I"C:/AntTweakBar/include"
-ATB_LIB    = -L"C:/AntTweakBar/lib"
+ATB_HDR    = #-I"/path/to/AntTweakBar/include"
+ATB_LIB    = #-L"/path/to/AntTweakBar/lib"
 
 # If you are on a system with poor (or no) library versioning, you must provide
 # the correct name of the library to link to (e.g. 32/64-bit) - we will attempt
@@ -48,8 +47,8 @@ endif
 CXX ?= clang++
 
 CXXFLAGS = -O3 -march=native -std=c++11 -Wall -Wextra \
-           $(OPENCL_HDR) $(SFML_HDR) $(ATB_HDR) \
-           -D__CL_ENABLE_EXCEPTIONS \
+           $(OPENCL_HDR) $(SFML_HDR) $(ATB_HDR)       \
+           -D__CL_ENABLE_EXCEPTIONS                   \
            #-DNO_ARGUMENT_LOOKUP
 
 LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system \
