@@ -88,6 +88,8 @@ namespace subsamplers
         AAx2,                                    // 2xAA (low_discrepancy)
         AAx4,                                    // 4xAA (low_discrepancy)
         AAx8,                                    // 8xAA (low_discrepancy)
+
+        COUNT_
     };
 
     /** Returns the subsampler corresponding to a \c generic enum value.
@@ -100,12 +102,11 @@ namespace subsamplers
     {
         switch (subsampler)
         {
-            case NONE: return none();
-            case AAx2: return low_discrepancy<2>();
-            case AAx4: return low_discrepancy<4>();
-            case AAx8: return low_discrepancy<8>();
+               case        NONE: return none();
+               case        AAx2: return low_discrepancy<2>();
+               case        AAx4: return low_discrepancy<4>();
+               case        AAx8: return low_discrepancy<8>();
+            default            : throw std::logic_error("Unknown subsampler");
         }
-
-        throw std::logic_error("Unknown subsampler");
     }
 };

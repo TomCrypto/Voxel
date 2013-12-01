@@ -7,9 +7,9 @@
 #include <memory>
 #include <map>
 
-#include "subsamplers/generic.hpp"
-#include "projections/generic.hpp"
-#include "integrators/generic.hpp"
+#include "modules/subsamplers/generic.hpp"
+#include "modules/projections/generic.hpp"
+#include "modules/integrators/generic.hpp"
 
 using std::unique_ptr;
 
@@ -141,22 +141,22 @@ static void define_types(void)
 {
     subsamplers_t = TwDefineEnum("Subsampler", (const TwEnumVal[])
     {
-        {subsamplers::generic::NONE, "None"},
-        {subsamplers::generic::AAx2, "2xAA"},
-        {subsamplers::generic::AAx4, "4xAA"},
-        {subsamplers::generic::AAx8, "8xAA"},
-    }, 4);
+        {subsamplers::generic::NONE,        "None"},
+        {subsamplers::generic::AAx2,        "2xAA"},
+        {subsamplers::generic::AAx4,        "4xAA"},
+        {subsamplers::generic::AAx8,        "8xAA"},
+    },   subsamplers::generic::COUNT_);
 
     integrators_t = TwDefineEnum("Integrator", (const TwEnumVal[])
     {
-        {integrators::generic::DEPTH, "Depth"},
-        {integrators::generic::AO, "Ambient Occlusion"},
-    }, 2);
+        {integrators::generic::DEPTH,       "Depth"},
+        {integrators::generic::AO,          "Ambient Occlusion"},
+    },   integrators::generic::COUNT_);
 
     projections_t = TwDefineEnum("Projection", (const TwEnumVal[])
     {
         {projections::generic::PERSPECTIVE, "Perspective"},
-    }, 1);
+    },   projections::generic::COUNT_);
 }
 
 void atb::initialize(const char *bar_title)

@@ -13,9 +13,9 @@
 
 #include "observer.hpp" // to move to renderer
 
-#include "integrators/generic.hpp"
-#include "subsamplers/generic.hpp"
-#include "projections/generic.hpp"
+#include "modules/integrators/generic.hpp"
+#include "modules/subsamplers/generic.hpp"
+#include "modules/projections/generic.hpp"
 
 #include "geometry/voxel_test.hpp" // to move to renderer
 

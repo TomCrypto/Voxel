@@ -34,6 +34,8 @@ namespace projections
     enum generic
     {
         PERSPECTIVE,                             // Perspective projection
+
+        COUNT_
     };
 
     /** Returns the projection corresponding to a \c generic enum value.
@@ -46,9 +48,8 @@ namespace projections
     {
         switch (projection)
         {
-            case PERSPECTIVE: return perspective();
+               case PERSPECTIVE: return perspective();
+            default            : throw std::logic_error("Unknown projection");
         }
-
-        throw std::logic_error("Unknown projection");
     }
 };
