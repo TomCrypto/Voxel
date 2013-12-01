@@ -85,14 +85,21 @@ std::size_t scheduler::get_arg(const cl::Kernel &kernel,
                                const std::string &name)
 {
 #ifdef NO_ARGUMENT_LOOKUP
-    (void)kernel;
+    std::string kernel_name = kernel.getInfo<CL_KERNEL_FUNCTION_NAME>();
 
-    if (name == "frm_data") return 0;
-    if (name == "frm_info") return 1;
-    if (name == "geometry") return 2;
-    if (name == "observer") return 3;
-
-    if (name == "tex_data") return 2;
+    if (kernel_name == "render")
+    {
+        if (name == "frm_data") return 0;
+        if (name == "frm_info") return 1;
+        if (name == "geometry") return 2;
+        if (name == "observer") return 3;
+    }
+    else if (kernel_name == "buf2tex")
+    {
+        if (name == "frm_data") return 0;
+        if (name == "frm_info") return 1;
+        if (name == "tex_data") return 2;
+    }
 #else
     std::size_t num_args = kernel.getInfo<CL_KERNEL_NUM_ARGS>();
 
