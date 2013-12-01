@@ -11,7 +11,7 @@ float3 integrate(struct Ray ray, global struct SVO_NODE *geometry,
     {
         advance(&ray, distance - 1e-3f, ray.d);
 
-        size_t total = 5, hits = 0;
+        size_t total = 1, hits = 0;
 
         for (size_t t = 0; t < total; ++t)
         {

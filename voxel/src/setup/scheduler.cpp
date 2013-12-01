@@ -186,4 +186,3 @@ void scheduler::read(const cl::Buffer &buffer, std::size_t offset, std::size_t s
 {
     queue.enqueueReadBuffer(buffer, blocking, offset, size, ptr);
 }
-

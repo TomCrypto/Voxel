@@ -44,6 +44,7 @@ unique_ptr<sf::Window> display::initialize(const std::string &name)
     auto window = unique_ptr<sf::Window>(new sf::Window(mode, name, style));
     window->setIcon(icon::width, icon::height, (unsigned char *)icon::data);
     window->setPosition(sf::Vector2i(initial_x, initial_y));
+    window->setFramerateLimit(60);
     atb::initialize("Configuration");
     setup_tweak_bar();
     return window;

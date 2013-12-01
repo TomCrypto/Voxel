@@ -4,7 +4,7 @@
 
 bool has_work(constant struct FRM_INFO *frm_info)
 {
-    return true;
+    return get_global_id(0) < frm_info->dim.x * frm_info->dim.y;
 }
 
 float2 resolve(constant struct FRM_INFO *frm_info)
@@ -39,8 +39,7 @@ float3 get_color(constant struct FRM_INFO *frm_info,
 
 ulong4 guid(constant struct FRM_INFO *frm_info)
 {
-    ulong frame_id = ((ulong)frm_info->dim.x << 32)  // 0..2^32 - 1 (width)
-                   | ((ulong)frm_info->dim.y <<  0); // 0..2^32 - 1 (height)
+    ulong frame_id = upsample(frm_info->dim.x, frm_info->dim.y);
 
     return (ulong4)(get_global_id(0),
                     get_global_id(1),
