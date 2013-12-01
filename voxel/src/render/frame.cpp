@@ -7,9 +7,9 @@ Frame::Frame(std::size_t width, std::size_t height)
     info.counter = 0;
 
     frame_buffer = scheduler::alloc_buffer(width * height * 16, CL_MEM_READ_WRITE);
-    frame_info = scheduler::alloc_buffer(sizeof(FrameInfo), CL_MEM_READ_ONLY |
-                                     CL_MEM_COPY_HOST_PTR,
-                                     &info);
+    frame_info = scheduler::alloc_buffer(sizeof(FrameInfo), CL_MEM_READ_ONLY);
+
+    clear();
 }
 
 void Frame::next(void)
