@@ -1,10 +1,10 @@
 #pragma once
 
-/** @file subsamplers/generic.hpp
+/** @file modules/subsamplers.hpp
   *
-  * @brief Generic Subsamplers
+  * @brief Subsampler Modules
   *
-  * Provides access to the most common subsampler types.
+  * Provides access to the subsamplers.
 **/
 
 #include <CL/cl.hpp>
@@ -16,7 +16,7 @@
 
 /** @namespace subsamplers
   *
-  * @brief Namespace for the subsamplers.
+  * @brief Namespace for the subsamplers
   *
   * @see include/modules/subsampler.cl
 **/
@@ -78,11 +78,11 @@ namespace subsamplers
 
     /**************************************************************************/
 
-    /** @enum generic
+    /** @enum modules
       *
-      * Defines some generic, fully qualified subsamplers.
+      * Defines some fully qualified subsamplers.
     **/
-    enum generic
+    enum modules
     {
         NONE,                                    // No subsampler (default)
         AAx2,                                    // 2xAA (low_discrepancy)
@@ -92,13 +92,13 @@ namespace subsamplers
         COUNT_
     };
 
-    /** Returns the subsampler corresponding to a \c generic enum value.
+    /** Returns the subsampler corresponding to an enum value.
       *
       * @param subsampler  Enum value.
       *
       * @return The subsampler program.
     **/
-    inline cl::Program get_generic(const generic &subsampler)
+    inline cl::Program get(const modules &subsampler)
     {
         switch (subsampler)
         {

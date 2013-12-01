@@ -121,8 +121,13 @@ std::size_t scheduler::get_arg(const cl::Kernel &kernel,
 void scheduler::run(const cl::Kernel &kernel,
                     const cl::NDRange &dimensions)
 {
+    size_t local = device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0];
+
+    // round up to nearest local size
+    cl::NDRange global = dimensions[0] - dimensions[0] % local + local;
+
     queue.finish();
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, dimensions,
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global,
                                cl::NullRange /* Find local size */);
 }
 

@@ -35,6 +35,17 @@ struct FRM_INFO
 **/
 bool has_work(constant struct FRM_INFO *frm_info);
 
+/** Computes the frame counter, a monotonically increasing integer, incremented
+  * each frame (useful for selecting which subsampler sample point to use).
+  *
+  * @param frm_info  The frame information structure.
+  *
+  * @return The frame counter for this frame.
+  *
+  * @remarks The value returned will be the same for all work items.
+**/
+ulong get_counter(constant struct FRM_INFO *frm_info);
+
 /** Resolves the (x, y) integer screen coordinates of a work item.
   *
   * @param frm_info  The frame information structure.

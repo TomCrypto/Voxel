@@ -1,4 +1,4 @@
-#include "frame.hpp"
+#include "render/frame.hpp"
 
 Frame::Frame(std::size_t width, std::size_t height)
 {
@@ -33,4 +33,14 @@ void Frame::read(void *ptr)
 void Frame::clear(void)
 {
     scheduler::clear_buffer(frame_buffer, info.width * info.height * 16);
+}
+
+size_t Frame::width()
+{
+    return info.width;
+}
+
+size_t Frame::height()
+{
+    return info.height;
 }

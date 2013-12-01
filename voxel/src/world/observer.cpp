@@ -1,4 +1,4 @@
-#include "observer.hpp"
+#include "world/observer.hpp"
 
 #include <CL/cl_platform.h>
 #include <cmath>

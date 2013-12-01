@@ -8,9 +8,9 @@
 #include <vector>
 #include <map>
 
-#include "modules/subsamplers/generic.hpp"
-#include "modules/projections/generic.hpp"
-#include "modules/integrators/generic.hpp"
+#include "modules/subsamplers.hpp"
+#include "modules/projections.hpp"
+#include "modules/integrators.hpp"
 
 using std::unique_ptr;
 
@@ -38,9 +38,9 @@ struct Variable
             float v_color3f[3];
             float v_color4f[4];
             float v_dir3f[3];
-            subsamplers::generic v_subsampler;
-            projections::generic v_projection;
-            integrators::generic v_integrator;
+            subsamplers::modules v_subsampler;
+            projections::modules v_projection;
+            integrators::modules v_integrator;
         } data;
 
         std::size_t get_type_size(TwType type)
@@ -86,12 +86,12 @@ struct Variable
             this->changed = false;
         }
 
-        void set_var(const void *ptr)
+        void set_var(const void *ptr, bool change = true)
         {
             if (memcmp(&data, ptr, size))
             {
                 memcpy(&data, ptr, size);
-                this->changed = true;
+                this->changed = change;
             }
         }
 
@@ -126,22 +126,22 @@ static void define_types(void)
 {
     subsamplers_t = TwDefineEnum("Subsampler", (const TwEnumVal[])
     {
-        {subsamplers::generic::NONE,        "None"},
-        {subsamplers::generic::AAx2,        "2xAA"},
-        {subsamplers::generic::AAx4,        "4xAA"},
-        {subsamplers::generic::AAx8,        "8xAA"},
-    },   subsamplers::generic::COUNT_);
+        {subsamplers::modules::NONE,        "None"},
+        {subsamplers::modules::AAx2,        "2xAA"},
+        {subsamplers::modules::AAx4,        "4xAA"},
+        {subsamplers::modules::AAx8,        "8xAA"},
+    },   subsamplers::modules::COUNT_);
 
     projections_t = TwDefineEnum("Projection", (const TwEnumVal[])
     {
-        {projections::generic::PERSPECTIVE, "Perspective"},
-    },   projections::generic::COUNT_);
+        {projections::modules::PERSPECTIVE, "Perspective"},
+    },   projections::modules::COUNT_);
 
     integrators_t = TwDefineEnum("Integrator", (const TwEnumVal[])
     {
-        {integrators::generic::DEPTH,       "Depth"},
-        {integrators::generic::AO,          "Ambient Occlusion"},
-    },   integrators::generic::COUNT_);
+        {integrators::modules::DEPTH,       "Depth"},
+        {integrators::modules::AO,          "Ambient Occlusion"},
+    },   integrators::modules::COUNT_);
 }
 
 void atb::initialize(const char *bar_title)
@@ -151,6 +151,11 @@ void atb::initialize(const char *bar_title)
     if (!(bar = TwNewBar(bar_title)))
         throw std::runtime_error("Failed to create new TweakBar");
     define_types();
+
+    std::string prefix = "'" + std::string(bar_title) + "' ";
+    TwDefine((prefix +  "contained=true").c_str());
+    TwDefine((prefix +  "size='275 400'").c_str());
+    TwDefine((prefix + "valueswidth=120").c_str());
 }
 
 void atb::window_resize(std::size_t width, std::size_t height)
@@ -178,7 +183,7 @@ const void *atb::read_var(const char *id)
 
 void atb::write_var(const char *id, const void *ptr)
 {
-    get_variable(id)->set_var(ptr);
+    get_variable(id)->set_var(ptr, false);
 }
 
 bool atb::handle_event(sf::Event &event)

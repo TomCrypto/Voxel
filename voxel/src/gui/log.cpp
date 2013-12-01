@@ -16,7 +16,7 @@ void print_exception(const string &msg, const cl::Error &e)
     cout << " [" << e.err() << "].\n";
 }
 
-void print_exception(const std::string &msg, const std::exception &e)
+void print_exception(const string &msg, const exception &e)
 {
     print_error_header();
     cout << msg << ": ";
@@ -49,7 +49,7 @@ void print_info(const string &msg)
 void print_error_header(void)
 {
     setColor(LIGHTRED);
-    cout << "[ ERROR ]";
+    cout << "[ FAIL ]";
     setColor(WHITE);
     cout << " ";
 }
@@ -57,7 +57,7 @@ void print_error_header(void)
 void print_warning_header(void)
 {
     setColor(YELLOW);
-    cout << "[WARNING]";
+    cout << "[ WARN ]";
     setColor(WHITE);
     cout << " ";
 }
@@ -65,7 +65,7 @@ void print_warning_header(void)
 void print_info_header(void)
 {
     setColor(LIGHTCYAN);
-    cout << "[  LOG  ]";
+    cout << "[ INFO ]";
     setColor(WHITE);
     cout << " ";
 }

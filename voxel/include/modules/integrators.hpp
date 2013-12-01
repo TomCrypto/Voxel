@@ -1,10 +1,10 @@
 #pragma once
 
-/** @file integrators/generic.hpp
+/** @file modules/integrators.hpp
   *
-  * @brief Generic Integrators
+  * @brief Integrator Modules
   *
-  * Provides access to the most common integrators.
+  * Provides access to the integrators.
 **/
 
 #include <CL/cl.hpp>
@@ -14,7 +14,7 @@
 
 /** @namespace integrators
   *
-  * @brief Namespace for the integrators.
+  * @brief Namespace for the integrators
   *
   * @see include/modules/integrator.cl
 **/
@@ -32,11 +32,11 @@ namespace integrators
 
     /**************************************************************************/
 
-    /** @enum generic
+    /** @enum modules
       *
-      * Defines some generic, fully qualified integrators.
+      * Defines some fully qualified integrators.
     **/
-    enum generic
+    enum modules
     {
         DEPTH,
         AO,
@@ -44,18 +44,18 @@ namespace integrators
         COUNT_
     };
 
-    /** Returns the integrator corresponding to a \c generic enum value.
+    /** Returns the integrator corresponding to an enum value.
       *
       * @param integrator  Enum value.
       *
       * @return The integrator program.
     **/
-    inline cl::Program get_generic(const generic &integrator)
+    inline cl::Program get(const modules &integrator)
     {
         switch (integrator)
         {
-               case    DEPTH   : return depth();
-               case       AO   : return ambient_occlusion();
+               case       DEPTH: return depth();
+               case          AO: return ambient_occlusion();
             default            : throw std::logic_error("Unknown integrator");
         }
     }

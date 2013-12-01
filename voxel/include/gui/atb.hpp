@@ -72,7 +72,8 @@ namespace atb
     **/
     const void *read_var(const char *id);
 
-    /** Writes the value of a variable.
+    /** Writes the value of a variable - note this does not set the variable as
+      * changed (since it was not modified by the user, but by the program).
       *
       * @param id   The variable ID.
       * @param ptr  A pointer to the new value.

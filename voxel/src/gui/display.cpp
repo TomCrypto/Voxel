@@ -1,40 +1,59 @@
 #include "external/icon.h"
 #include "gui/display.hpp"
 #include "gui/atb.hpp"
+#include "gui/log.hpp"
 
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/Window.hpp>
 #include <cstddef>
+#include <cstdint>
 
-#include "setup/scheduler.hpp" // to move to renderer
+#include "world/observer.hpp" // to move to world
+
+#include "modules/integrators.hpp"
+#include "modules/subsamplers.hpp"
+#include "modules/projections.hpp"
+
 #include "setup/interop.hpp"
-
-#include "frame.hpp" // to move to renderer
-
-#include "observer.hpp" // to move to renderer
-
-#include "modules/integrators/generic.hpp"
-#include "modules/subsamplers/generic.hpp"
-#include "modules/projections/generic.hpp"
-
-#include "geometry/voxel_test.hpp" // to move to renderer
+#include "render/engine.hpp"
 
 using std::unique_ptr;
 
-static const std::size_t initial_w = 512, initial_x = 200;
-static const std::size_t initial_h = 512, initial_y = 200;
-static const auto default_subsampler = subsamplers::generic::NONE;
-static const auto default_projection = projections::generic::PERSPECTIVE;
-static const auto default_integrator = integrators::generic::DEPTH;
+static const std::size_t initial_w = 800, initial_x = 200;
+static const std::size_t initial_h = 600, initial_y = 200;
+static const auto default_subsampler = subsamplers::modules::AAx4;
+static const auto default_projection = projections::modules::PERSPECTIVE;
+static const auto default_integrator = integrators::modules::DEPTH;
+
+static Engine create_engine(cl::ImageGL &image)
+{
+    return Engine(subsamplers::get(default_subsampler),
+                  projections::get(default_projection),
+                  integrators::get(default_integrator),
+                  initial_w, initial_h, image);
+}
 
 static void setup_tweak_bar(void)
 {
-    atb::add_var("subsampler", "Subsampler", atb::subsamplers());
-    atb::add_var("projection", "Projection", atb::projections());
-    atb::add_var("integrator", "Integrator", atb::integrators());
+    atb::add_var("subsampler", "Subsampler", atb::subsamplers(),
+                 "group='Modules'");
+    atb::add_var("projection", "Projection", atb::projections(),
+                 "group='Modules'");
+    atb::add_var("integrator", "Integrator", atb::integrators(),
+                 "group='Modules'");
+    atb::add_var("work_ratio", "Samples/Frame", TW_TYPE_UINT32,
+                 "min=1 max=16 group='Miscellaneous'");
+    atb::add_var("rot_speed", "Rotation Speed", TW_TYPE_FLOAT,
+                 "min=0.5 max=10 step=0.1 group='Miscellaneous'");
+    atb::add_var("move_speed", "Movement Speed", TW_TYPE_FLOAT,
+                 "min=0.5 max=10 step=0.1 group='Miscellaneous'");
+
     atb::set_var("subsampler", default_subsampler);
     atb::set_var("projection", default_projection);
     atb::set_var("integrator", default_integrator);
+    atb::set_var("work_ratio", 1);
+    atb::set_var("rot_speed", 5.0f);
+    atb::set_var("move_speed", 3.0f);
 }
 
 unique_ptr<sf::Window> display::initialize(const std::string &name)
@@ -44,33 +63,70 @@ unique_ptr<sf::Window> display::initialize(const std::string &name)
     auto window = unique_ptr<sf::Window>(new sf::Window(mode, name, style));
     window->setIcon(icon::width, icon::height, (unsigned char *)icon::data);
     window->setPosition(sf::Vector2i(initial_x, initial_y));
-    window->setFramerateLimit(60);
+    window->setFramerateLimit(60); // to avoid thrashing
     atb::initialize("Configuration");
     setup_tweak_bar();
     return window;
 }
 
-static void do_stuff(sf::Window &window)
+static void resize_window(Engine &engine, cl::ImageGL &image,
+                          size_t width, size_t height)
 {
-    // start is a hack so that everything is initialized before rendering
-    // begins (previously assumed that the window resize event would be fired
-    // immediately thereby allocating all resources, but this is not the case
-    // on all operating systems)
-    bool relink = false, start = true;
+    interop::free_image(image);
+    atb::window_resize(width, height);
+    image = interop::get_image(width, height);
+    engine.resize_frame(width, height, image);
+}
 
-    // following code belongs somewhere else (renderer class?)
+static void display_frame(cl::ImageGL &image, unique_ptr<sf::Window> &window)
+{
+    interop::draw_image(image);
+    atb::draw(); // overlay
+    window->display();
+}
 
-    atb::window_resize(window.getSize().x, window.getSize().y);
+static void check_modules(Engine &engine)
+{
+    if (atb::has_changed("subsampler"))
+    {
+        auto module_id = atb::get_var<subsamplers::modules>("subsampler");
+        const cl::Program &module = subsamplers::get(module_id);
+        engine.set_module(Engine::Module::SUBSAMPLER, module);
+    }
 
-    cl::ImageGL image = interop::get_image(window.getSize().x, window.getSize().y);
+    if (atb::has_changed("projection"))
+    {
+        auto module_id = atb::get_var<projections::modules>("projection");
+        const cl::Program &module = projections::get(module_id);
+        engine.set_module(Engine::Module::PROJECTION, module);
+    }
 
-    Frame frame(window.getSize().x, window.getSize().y);
+    if (atb::has_changed("integrator"))
+    {
+        auto module_id = atb::get_var<integrators::modules>("integrator");
+        const cl::Program &module = integrators::get(module_id);
+        engine.set_module(Engine::Module::INTEGRATOR, module);
+    }
+}
 
-    VoxelTest geometry_o;
+static void process_input(Engine &engine)
+{
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
+    {
+        observer::forward(+atb::get_var<float>("move_speed") * 1e-2f);
+        engine.clear_frame();
+    }
 
-    cl::Buffer geometry_buffer = scheduler::alloc_buffer(geometry_o.bufSize(),
-                                 CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                 geometry_o.getPtr());
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
+    {
+        observer::forward(-atb::get_var<float>("move_speed") * 1e-2f);
+        engine.clear_frame();
+    }
+}
+
+void display::run(unique_ptr<sf::Window> &window)
+{
+    // begin (MOVE THIS TO WORLD LATER ON)
 
     observer::setup();
 
@@ -78,194 +134,94 @@ static void do_stuff(sf::Window &window)
     observer::look_at(math::float3(0, -0.5, 1));
     observer::set_fov(90);
 
-    cl::Program main_prog = scheduler::acquire("main");
-
-    cl::Program projection;
-    cl::Program subsampler;
-    cl::Program integrator;
-
-    cl::Program geometry = scheduler::acquire("core/geometry");
-    cl::Program frame_io = scheduler::acquire("core/frame_io");
-    cl::Program math_lib = scheduler::acquire("core/math_lib");
-    cl::Program prng_lib = scheduler::acquire("core/prng_lib");
-
-    cl::Program linked;
-
-    cl::Kernel kernel;
-    cl::Kernel buf2tex;
-
     // end
 
+    print_info("Creating initial CL/GL image");
+    atb::window_resize(initial_w, initial_h); // must resize now
+    cl::ImageGL image = interop::get_image(initial_w, initial_h);
+
+    print_info("Starting event loop");
+    Engine engine = create_engine(image);
+
+    /* To track movement. */
+    sf::Vector2u cursor_pos;
     bool mouse_down = false;
-    int last_x = 0, last_y = 0;
+    sf::Clock clock;
 
-    while (window.isOpen())
+    while (window->isOpen())
     {
-        sf::Event event;
-        while (window.pollEvent(event))
+        sf::Event event; // event loop
+        while (window->pollEvent(event))
         {
+            /* Was this meant for ATB? */
             if (atb::handle_event(event))
-            {
-                window.setMouseCursorVisible(true);
                 mouse_down = false;
-                continue;
-            }
-
-            if (event.type == sf::Event::Closed)
-                return;
-
-            if (event.type == sf::Event::KeyPressed)
-            {
-                if (event.key.code == sf::Keyboard::Escape)
-                    return;
-                if (event.key.code == sf::Keyboard::W)
-                {
-                    observer::forward(0.01f);
-                    frame.clear();
-                }
-                if (event.key.code == sf::Keyboard::S)
-                {
-                    observer::forward(-0.01f);
-                    frame.clear();
-                }
-                if (event.key.code == sf::Keyboard::R)
-                {
-                    observer::roll(0.05f);
-                    frame.clear();
-                }
-                if (event.key.code == sf::Keyboard::U)
-                {
-                    window.setSize(sf::Vector2u(800, 600));
-                    frame.clear();
-                }
-            }
-
-            if ((event.type == sf::Event::Resized) || start)
-            {
-                int x = start ? initial_w : window.getSize().x;
-                int y = start ? initial_h : window.getSize().y;
-
-                atb::window_resize(x, y);
-                frame = Frame(x, y);
-                interop::free_image(image);
-                image = interop::get_image(x, y);
-                frame.clear();
-            }
-
-            if (event.type == sf::Event::MouseButtonPressed)
+            /* Track mouse movement (to update view direction). */
+            else if (event.type == sf::Event::MouseButtonReleased)
+                mouse_down = false;
+            else if (event.type == sf::Event::MouseLeft)
+                mouse_down = false;
+            else if (event.type == sf::Event::MouseButtonPressed)
             {
                 if (event.mouseButton.button == sf::Mouse::Button::Left)
                 {
+                    cursor_pos = sf::Vector2u(event.mouseButton.x,
+                                              event.mouseButton.y);
                     mouse_down = true;
-                    window.setMouseCursorVisible(false);
-                    last_x = event.mouseButton.x;
-                    last_y = event.mouseButton.y;
                 }
             }
-
-            if (event.type == sf::Event::MouseButtonReleased)
+            else if (event.type == sf::Event::MouseMoved)
             {
-                window.setMouseCursorVisible(true);
-                mouse_down = false;
-            }
-
-            if (event.type == sf::Event::MouseLeft)
-            {
-                window.setMouseCursorVisible(true);
-                mouse_down = false;
-            }
-
-            if (event.type == sf::Event::MouseMoved)
-            {
-                if (mouse_down)
+                if (mouse_down) /* Is the user dragging the mouse? */
                 {
-                    if ((event.mouseMove.x == last_x) && (event.mouseMove.y == last_y)) continue;
+                    sf::Vector2u pos = sf::Vector2u(event.mouseMove.x,
+                                                    event.mouseMove.y);
 
-                    frame.clear();
-                    float x = -(float)(event.mouseMove.x - last_x) / window.getSize().x * 2;
-                    float y = (float)(event.mouseMove.y - last_y) / window.getSize().y * 2;
-                    last_x = event.mouseMove.x;
-                    last_y = event.mouseMove.y;
-                    observer::turn_h(x * 1.5f);
-                    observer::turn_v(y * 1.5f);
+                    if (pos != cursor_pos)
+                    {
+                        auto delta = sf::Vector2i(pos - cursor_pos);
+                        float dx = (float)delta.x / window->getSize().x;
+                        float dy = (float)delta.y / window->getSize().y;
+                        cursor_pos = pos;
+
+                        float speed = atb::get_var<float>("rot_speed");
+                        observer::turn_h(-dx * speed);
+                        observer::turn_v(+dy * speed);
+                        engine.clear_frame();
+                    }
                 }
             }
+            /* Has window been resized by the user? */
+            else if (event.type == sf::Event::Resized)
+                resize_window(engine, image, event.size.width,
+                                             event.size.height);
+            /* We handle any exit conditions here. */
+            else if (event.type == sf::Event::Closed)
+                return;
+            else if ((event.type == sf::Event::KeyPressed)
+                  && (event.key.code == sf::Keyboard::Escape))
+                return;
+
+            /* This is just for better presentation. */
+            window->setMouseCursorVisible(!mouse_down);
         }
 
-        if (atb::has_changed("integrator") || start)
-        {
-            auto value = atb::get_var<integrators::generic>("integrator");
-            integrator = integrators::get_generic(value);
-            relink = true;
-        }
+        /* GUI bookkeeping. */
+        process_input(engine);
+        check_modules(engine);
 
-        if (atb::has_changed("subsampler") || start)
-        {
-            auto value = atb::get_var<subsamplers::generic>("subsampler");
-            subsampler = subsamplers::get_generic(value);
-            relink = true;
-        }
+        interop::synchronize_cl(image); /* NOW RENDERING | OpenCL ----------- */
 
-        if (atb::has_changed("projection") || start)
-        {
-            auto value = atb::get_var<projections::generic>("projection");
-            projection = projections::get_generic(value);
-            relink = true;
-        }
+        size_t samples = atb::get_var<uint32_t>("work_ratio");
+        for (size_t t = 0; t < samples; ++t) engine.sample();
 
-        if (relink)
-        {
-            std::vector<cl::Program> programs;
-            programs.push_back(main_prog);
-            programs.push_back(projection);
-            programs.push_back(subsampler);
-            programs.push_back(integrator);
-            programs.push_back(math_lib);
-            programs.push_back(prng_lib);
-            programs.push_back(geometry);
-            programs.push_back(frame_io);
+        engine.draw();
 
-            linked = scheduler::link(programs, "renderer");
-            kernel = scheduler::get(linked, "render");
-            buf2tex = scheduler::get(linked, "buf2tex");
-            frame.clear();
-            relink = false;
-            start = false;
-        }
+        interop::synchronize_gl(image); /* NOW DISPLAYING | OpenGL ---------- */
 
-        frame.next();
-
-        observer::bind_to(kernel);
-
-        scheduler::set_arg(kernel, "geometry", geometry_buffer);
-
-        frame.bind_to(kernel);
-        scheduler::run(kernel, cl::NDRange(window.getSize().x * window.getSize().y));
-
-        // post-process into texture here
-
-        frame.bind_to(buf2tex);
-        scheduler::set_arg(buf2tex, "tex_data", image);
-
-        interop::synchronize_cl(image);
-
-        scheduler::run(buf2tex, cl::NDRange(window.getSize().x * window.getSize().y));
-
-        interop::synchronize_gl(image);
-
-        interop::draw_image(image);
-
-        atb::draw();
-
-        window.display();
+        display_frame(image, window);
+        clock.restart();
     }
-}
-
-void display::run(unique_ptr<sf::Window> &window)
-{
-    // put the actual event loop (with simple renderer calls) here later on
-
-    do_stuff(*window);
 }
 
 void display::finalize(unique_ptr<sf::Window> &window)

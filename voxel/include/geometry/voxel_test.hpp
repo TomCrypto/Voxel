@@ -1,8 +1,8 @@
+// this will be refactored soon
+
 #pragma once
 
 /* Voxel test with procedural data. */
-
-#include "material.hpp"
 
 #include "math/vector3.hpp"
 #include <cmath>
@@ -13,7 +13,7 @@
 
 #include <algorithm>
 
-#include "contact.hpp"
+#include "geometry/contact.hpp"
 
 #include "geometry/voxel_types.hpp"
 
@@ -50,13 +50,13 @@ struct Node
     uint32_t child[8];
 };
 
-uint32_t encode_leaf(const uint16_t &normal, const uint16_t &material)
+inline uint32_t encode_leaf(const uint16_t &normal, const uint16_t &material)
 {
     return (((material & 0x7FFF) << 16) | normal) | 0x80000000;
 }
 
 // assumes the high bit marker has already been removed
-void decode_leaf(const uint32_t &leaf, uint16_t &normal, uint16_t &material)
+inline void decode_leaf(const uint32_t &leaf, uint16_t &normal, uint16_t &material)
 {
     material = leaf >> 16;
     normal = leaf & 0xFFFF;

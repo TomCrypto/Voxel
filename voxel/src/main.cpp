@@ -10,11 +10,12 @@
 
 /*
 #error "TODO (ideas so far, non-exhaustive):"
-#error "1. clean up observer and frame"
-#error "2. implement smooth keyboard using SFML keyboard class"
-#error "3. separate rendering from display, and pass it to the display"
-#error "4. once platform-specific stuff is working, fix makefile to have a"
-#error "   Windows configuration and make everything work on Linux"
+#error "1. clean up engine, observer, and frame"
+#error "2. figure out how to implement post-processing"
+#error "3. tidy the Engine class, which is a mess at the moment"
+#error "4. move observer setup in a 'World' class and pass that to the engine"
+#error "5. initialize the World before the user interface somehow"
+#error "6. test current event loop on Linux (does it work properly now?)"
 */
 
 #include "setup/devices.hpp"
@@ -34,18 +35,21 @@ int main(int argc, char *argv[])
             cl::Device device; // The device is selected by the user
             if (!select_device(argv[2], device)) return EXIT_FAILURE;
 
+            // TODO: initialize world here
+            print_info("Loading world");
+            print_warning("Not implemented yet");
+
             try
             {
                 print_info("Initializing graphical user interface");
                 auto window = display::initialize("Voxel Renderer");
 
-                print_info("Loading preferred CL/GL interop environment");
+                print_info("Selecting preferred interop interface");
                 interop::initialize(device, window->getSystemHandle());
                 print_info("Scheduler ready, interop is available");
 
                 try
                 {
-                    print_info("Handing over control to display");
                     display::run(window); // May throw cl::Error
                     display::finalize(window); // All done, exit
                 }

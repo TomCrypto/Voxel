@@ -7,6 +7,11 @@ bool has_work(constant struct FRM_INFO *frm_info)
     return get_global_id(0) < frm_info->dim.x * frm_info->dim.y;
 }
 
+ulong get_counter(constant struct FRM_INFO *frm_info)
+{
+    return frm_info->ctr;
+}
+
 float2 resolve(constant struct FRM_INFO *frm_info)
 {
     return (float2)(get_global_id(0) % frm_info->dim.x,

@@ -1,10 +1,10 @@
 #pragma once
 
-/** @file projections/generic.hpp
+/** @file modules/projections.hpp
   *
-  * @brief Generic Projections
+  * @brief Projection Modules
   *
-  * Provides access to the most common projection models.
+  * Provides access to the projections.
 **/
 
 #include <CL/cl.hpp>
@@ -14,7 +14,7 @@
 
 /** @namespace projections
   *
-  * @brief Namespace for the projections.
+  * @brief Namespace for the projections
   *
   * @see include/modules/projection.cl
 **/
@@ -27,24 +27,24 @@ namespace projections
 
     /**************************************************************************/
 
-    /** @enum generic
+    /** @enum modules
       *
-      * Defines some generic, fully qualified projections.
+      * Defines some fully qualified projections.
     **/
-    enum generic
+    enum modules
     {
         PERSPECTIVE,                             // Perspective projection
 
         COUNT_
     };
 
-    /** Returns the projection corresponding to a \c generic enum value.
+    /** Returns the projection corresponding to an enum value.
       *
       * @param projection  Enum value.
       *
       * @return The projection program.
     **/
-    inline cl::Program get_generic(const generic &projection)
+    inline cl::Program get(const modules &projection)
     {
         switch (projection)
         {

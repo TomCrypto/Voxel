@@ -25,6 +25,9 @@ class Frame
 
         void clear(void);
 
+        size_t width();
+        size_t height();
+
     private:
         cl::Buffer frame_buffer;
         cl::Buffer frame_info;
