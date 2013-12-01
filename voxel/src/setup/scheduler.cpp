@@ -14,6 +14,11 @@ cl_platform_id scheduler::get_platform(const cl::Device &dev)
     return dev.getInfo<CL_DEVICE_PLATFORM>();
 }
 
+cl::CommandQueue scheduler::get_queue(void)
+{
+    return queue;
+}
+
 void scheduler::setup(const cl::Device &dev, cl_context_properties *options)
 {
     context = cl::Context(std::vector<cl::Device>(1, dev), options);
@@ -154,19 +159,6 @@ void scheduler::clear_buffer(cl::Buffer &buffer, std::size_t size)
     u.s[3] = 0;
 
     queue.enqueueFillBuffer(buffer, u, 0, size);
-}
-
-void scheduler::acquireGL(const cl::Memory &object)
-{
-    std::vector<cl::Memory> obj(1, object);
-    queue.enqueueAcquireGLObjects(&obj);
-
-}
-
-void scheduler::releaseGL(const cl::Memory &object)
-{
-    std::vector<cl::Memory> obj(1, object);
-    queue.enqueueReleaseGLObjects(&obj);
 }
 
 cl::Buffer scheduler::alloc_buffer(std::size_t size, cl_mem_flags flags,

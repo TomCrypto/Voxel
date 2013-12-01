@@ -2,8 +2,9 @@
 #include "setup/interop.hpp"
 
 #include <SFML/OpenGL.hpp>
+#include <CL/cl.hpp>
 
-#if defined _WIN32 || defined _WIN64
+#if defined _WIN32
     #include <Wingdi.h>
 #elif defined __linux__
     #include <GL/glx.h>
@@ -11,13 +12,13 @@
 
 static GLuint texture;
 
-void interop::initialize(const cl::Device &device, sf::WindowHandle handle)
+void interop::initialize(const cl::Device &device, sf::WindowHandle /*handle*/)
 {
-#if defined _WIN32 || defined _WIN64
+#if defined _WIN32
     cl_context_properties props[] =
     {
         CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
-        CL_WGL_HDC_KHR,    (cl_context_properties)GetDC(handle),
+        CL_WGL_HDC_KHR,    (cl_context_properties)wglGetCurrentDC(),
         0
     };
 
@@ -65,4 +66,18 @@ void interop::draw_image(const cl::ImageGL &/*image*/)
 
     glEnd();
     glDisable(GL_TEXTURE_2D);
+}
+
+void interop::synchronize_cl(const cl::ImageGL &image)
+{
+    std::vector<cl::Memory> img(1, image);
+    auto v_queue = scheduler::get_queue();
+    v_queue.enqueueAcquireGLObjects(&img);
+}
+
+void interop::synchronize_gl(const cl::ImageGL &image)
+{
+    std::vector<cl::Memory> img(1, image);
+    auto v_queue = scheduler::get_queue();
+    v_queue.enqueueReleaseGLObjects(&img);
 }

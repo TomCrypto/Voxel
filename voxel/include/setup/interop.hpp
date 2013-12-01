@@ -53,4 +53,24 @@ namespace interop
       *          OpenCL image, and must have been released by the CL context.
     **/
     void draw_image(const cl::ImageGL &image);
+
+    /** Synchronizes the OpenCL/OpenGL image for OpenCL usage.
+      *
+      * @param image  The OpenCL/OpenGL image.
+      *
+      * @remarks After this function returns, this image may be used for OpenCL
+      *          rendering (i.e. used in kernels, and so on), however, using it
+      *          from OpenGL invokes undefined behaviour.
+    **/
+    void synchronize_cl(const cl::ImageGL &image);
+
+    /** Synchronizes the OpenCL/OpenGL image for OpenGL usage.
+      *
+      * @param image  The OpenCL/OpenGL image.
+      *
+      * @remarks After this function returns, this image may be used for OpenGL
+      *          rendering (i.e. used in shaders, and so on), however, using it
+      *          from OpenCL invokes undefined behaviour.
+    **/
+    void synchronize_gl(const cl::ImageGL &image);
 };

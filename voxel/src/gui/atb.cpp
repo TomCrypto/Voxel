@@ -38,9 +38,9 @@ struct Variable
             float v_color3f[3];
             float v_color4f[4];
             float v_dir3f[3];
-            integrators::generic v_integrator;
             subsamplers::generic v_subsampler;
             projections::generic v_projection;
+            integrators::generic v_integrator;
         } data;
 
         std::size_t get_type_size(TwType type)

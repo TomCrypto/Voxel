@@ -247,11 +247,11 @@ static void do_stuff(sf::Window &window)
         frame.bind_to(buf2tex);
         scheduler::set_arg(buf2tex, "tex_data", image);
 
-        scheduler::acquireGL(image);
+        interop::synchronize_cl(image);
 
         scheduler::run(buf2tex, cl::NDRange(window.getSize().x * window.getSize().y));
 
-        scheduler::releaseGL(image);
+        interop::synchronize_gl(image);
 
         interop::draw_image(image);
 

@@ -11,6 +11,8 @@ namespace scheduler
 {
     cl_platform_id get_platform(const cl::Device &dev);
 
+    cl::CommandQueue get_queue(void);
+
     void setup(const cl::Device &device, cl_context_properties *options = 0);
 
     cl::Program acquire(const std::string &name,
@@ -53,9 +55,6 @@ namespace scheduler
     void clear_gl_image(cl::Image &image, std::size_t width, std::size_t height);
 
     void clear_buffer(cl::Buffer &buffer, std::size_t size);
-
-    void acquireGL(const cl::Memory &object);
-    void releaseGL(const cl::Memory &object);
 
     cl::Buffer alloc_buffer(std::size_t size, cl_mem_flags flags, void *ptr
                             = nullptr);
