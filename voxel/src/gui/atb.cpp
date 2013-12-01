@@ -26,7 +26,7 @@ static TwBar *bar;
 struct Variable
 {
     private:
-        std::vector<char> var_id;
+        std::string id, def;
         std::size_t size;
 
         union
@@ -61,17 +61,16 @@ struct Variable
     public:
         bool changed;
 
-        Variable(const char *id, const char *name, TwType type,
-                 const char *opt = "")
+        Variable(const std::string &name, const std::string &label,
+                 TwType var_type, const std::string &opt = "")
+            : id(name), def(opt + " label='" + label + "'"),
+              size(get_type_size(var_type)), changed(false)
         {
-            if (!strlen(id)) // Cannot accept empty variable names
-                throw std::logic_error("Variable must have an ID");
+            if (name.empty()) // Disallow empty variable names
+                throw std::logic_error("Variable must have a name");
 
-            this->changed = false;
-            this->size = get_type_size(type);
-            this->var_id = std::vector<char>(id, id + strlen(id) + 1);
-            auto def = (std::string(opt) + " label='" + name + "'").c_str();
-            if (!TwAddVarCB(bar, id, type, set_cb, get_cb, &var_id[0], def))
+            if (!TwAddVarCB(bar, name.c_str(), var_type, set_cb, get_cb,
+                            const_cast<char *>(id.c_str()), def.c_str()))
                 throw std::runtime_error("Failed to create variable");
         }
 
@@ -97,7 +96,7 @@ struct Variable
 
         ~Variable()
         {
-            TwRemoveVar(bar, &var_id[0]);
+            TwRemoveVar(bar, id.c_str());
         }
 };
 
