@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 #include <memory>
+#include <vector>
 #include <map>
 
 #include "modules/subsamplers/generic.hpp"
@@ -13,22 +14,19 @@
 
 using std::unique_ptr;
 
-static TwType subsamplers_t;
-static TwType projections_t;
-static TwType integrators_t;
-
+static TwType subsamplers_t, projections_t, integrators_t;
 TwType atb::subsamplers(void) { return subsamplers_t; }
 TwType atb::projections(void) { return projections_t; }
 TwType atb::integrators(void) { return integrators_t; }
 
 static void TW_CALL set_cb(const void *value, void *id);
-static void TW_CALL get_cb(void *value, void *id);
+static void TW_CALL get_cb(      void *value, void *id);
 static TwBar *bar;
 
 struct Variable
 {
     private:
-        std::string name;
+        std::vector<char> var_id;
         std::size_t size;
 
         union
@@ -47,27 +45,16 @@ struct Variable
 
         std::size_t get_type_size(TwType type)
         {
-            if (type == TW_TYPE_BOOLCPP)
-                return sizeof(data.v_bool);
-            if (type == TW_TYPE_INT32)
-                return sizeof(data.v_int);
-            if (type == TW_TYPE_UINT32)
-                return sizeof(data.v_uint);
-            if (type == TW_TYPE_FLOAT)
-                return sizeof(data.v_float);
-            if (type == TW_TYPE_COLOR3F)
-                return sizeof(data.v_color3f);
-            if (type == TW_TYPE_COLOR4F)
-                return sizeof(data.v_color4f);
-            if (type == TW_TYPE_DIR3F)
-                return sizeof(data.v_dir3f);
-            if (type == atb::integrators())
-                return sizeof(data.v_integrator);
-            if (type == atb::subsamplers())
-                return sizeof(data.v_subsampler);
-            if (type == atb::projections())
-                return sizeof(data.v_projection);
-
+            if (type == TW_TYPE_BOOLCPP)    return sizeof(data.v_bool);
+            if (type == TW_TYPE_INT32)      return sizeof(data.v_int);
+            if (type == TW_TYPE_UINT32)     return sizeof(data.v_uint);
+            if (type == TW_TYPE_FLOAT)      return sizeof(data.v_float);
+            if (type == TW_TYPE_COLOR3F)    return sizeof(data.v_color3f);
+            if (type == TW_TYPE_COLOR4F)    return sizeof(data.v_color4f);
+            if (type == TW_TYPE_DIR3F)      return sizeof(data.v_dir3f);
+            if (type == atb::subsamplers()) return sizeof(data.v_subsampler);
+            if (type == atb::projections()) return sizeof(data.v_projection);
+            if (type == atb::integrators()) return sizeof(data.v_integrator);
             throw new std::logic_error("Unknown TweakBar variable type");
         }
 
@@ -75,18 +62,16 @@ struct Variable
         bool changed;
 
         Variable(const char *id, const char *name, TwType type,
-                 const char *options)
+                 const char *opt = "")
         {
             if (!strlen(id)) // Cannot accept empty variable names
                 throw std::logic_error("Variable must have an ID");
 
             this->changed = false;
             this->size = get_type_size(type);
-            this->name = std::string(id); /* Keep strong reference to ID. */
-            std::string def = std::string(options) + " label='" + name + "'";
-            if (!TwAddVarCB(bar, id, type, set_cb, get_cb,
-                            const_cast<char *>(this->name.c_str()),
-                            def.c_str()))
+            this->var_id = std::vector<char>(id, id + strlen(id) + 1);
+            auto def = (std::string(opt) + " label='" + name + "'").c_str();
+            if (!TwAddVarCB(bar, id, type, set_cb, get_cb, &var_id[0], def))
                 throw std::runtime_error("Failed to create variable");
         }
 
@@ -112,7 +97,7 @@ struct Variable
 
         ~Variable()
         {
-            TwRemoveVar(bar, name.c_str());
+            TwRemoveVar(bar, &var_id[0]);
         }
 };
 
@@ -147,16 +132,16 @@ static void define_types(void)
         {subsamplers::generic::AAx8,        "8xAA"},
     },   subsamplers::generic::COUNT_);
 
+    projections_t = TwDefineEnum("Projection", (const TwEnumVal[])
+    {
+        {projections::generic::PERSPECTIVE, "Perspective"},
+    },   projections::generic::COUNT_);
+
     integrators_t = TwDefineEnum("Integrator", (const TwEnumVal[])
     {
         {integrators::generic::DEPTH,       "Depth"},
         {integrators::generic::AO,          "Ambient Occlusion"},
     },   integrators::generic::COUNT_);
-
-    projections_t = TwDefineEnum("Projection", (const TwEnumVal[])
-    {
-        {projections::generic::PERSPECTIVE, "Perspective"},
-    },   projections::generic::COUNT_);
 }
 
 void atb::initialize(const char *bar_title)
