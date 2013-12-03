@@ -106,7 +106,7 @@ namespace atb
 
     /** Draws the tweak bar on the screen.
     **/
-    void draw(void);
+    void draw_tweak_bar(void);
 
     /** Finalizes the AntTweakBar library.
     **/

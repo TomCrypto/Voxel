@@ -67,7 +67,7 @@ bool traverse(global struct SVO_NODE *geometry,
 bool occlude(global struct SVO_NODE *geometry,
              const struct Ray ray, float range)
 {
-    STACK_ITEM stack[32];
+    STACK_ITEM stack[20];
     size_t sp = 0;
 
     stack[0].offset = 0;
@@ -75,30 +75,33 @@ bool occlude(global struct SVO_NODE *geometry,
     stack[0].cube = (struct Box){(float3)(-1, -1, -1), (float3)(+1, +1, +1)};
     ++sp;
 
-    float3 invdir = 1.0f / ray.d;
+    float3 invdir = native_recip(ray.d);
 
     while (sp)
     {
         STACK_ITEM s = stack[--sp];
 
-        if (s.offset & 0x80000000)
+        if (s.hit < range)
         {
-            return true;
-        }
-        else
-        {
-            struct SVO_NODE current = geometry[s.offset];
-            for (size_t t = 0; t < 8; ++t)
+            if (s.offset & 0x80000000)
             {
-                uint child = current.child[t];
-                if (child == 0x00000000) continue;
+                return true;
+            }
+            else
+            {
+                struct SVO_NODE current = geometry[s.offset];
+                for (size_t t = 0; t < 8; ++t)
+                {
+                    uint child = current.child[t];
+                    if (child == 0x00000000) continue;
 
-                STACK_ITEM node;
-                node.offset = child;
-                node.cube = subdivide(s.cube, t);
+                    STACK_ITEM node;
+                    node.offset = child;
+                    node.cube = subdivide(s.cube, t);
 
-                if (intersect(ray, node.cube, invdir, &node.hit))
-                    stack[sp++] = node;
+                    if (intersect(ray, node.cube, invdir, &node.hit))
+                        if (node.hit < range) stack[sp++] = node;
+                }
             }
         }
     }

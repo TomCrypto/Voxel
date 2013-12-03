@@ -219,7 +219,7 @@ void display::run(unique_ptr<sf::Window> &window, World &world)
         interop::synchronize_gl(image); /* NOW DISPLAYING | OpenGL ---------- */
 
         interop::draw_image(image);
-        atb::draw(); // overlay
+        atb::draw_tweak_bar();
         window->display();
     }
 }

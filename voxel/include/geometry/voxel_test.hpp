@@ -289,7 +289,7 @@ private:
         //if ((z <= 0.2f)) return std::numeric_limits<distance>::infinity();
 
 
-        return -0.7f + 0.03f * (sin(15 * z) + sin(10 * x + 1));
+        return -0.9f + 0.03f * (sin(15 * z) + sin(10 * x + 1));
 
         //return -2.0f/3.0f + 0.2f * x * x;
     }

@@ -191,7 +191,7 @@ bool atb::handle_event(sf::Event &event)
     return TwEventSFML(&event, 2, 1);
 }
 
-void atb::draw(void)
+void atb::draw_tweak_bar(void)
 {
     if (!TwDraw()) throw std::runtime_error("Failed to draw TweakBar");
 }
