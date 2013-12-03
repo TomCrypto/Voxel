@@ -8,18 +8,9 @@
     #error "OpenCL 1.2 is required to build this software!"
 #endif
 
-/*
-#error "TODO (ideas so far, non-exhaustive):"
-#error "1. clean up engine, observer, and frame"
-#error "2. figure out how to implement post-processing"
-#error "3. tidy the Engine class, which is a mess at the moment"
-#error "4. move observer setup in a 'World' class and pass that to the engine"
-#error "5. initialize the World before the user interface somehow"
-#error "6. test current event loop on Linux (does it work properly now?)"
-*/
-
 #include "setup/devices.hpp"
 #include "setup/interop.hpp"
+#include "world/world.hpp"
 #include "gui/display.hpp"
 #include "gui/log.hpp"
 
@@ -35,10 +26,6 @@ int main(int argc, char *argv[])
             cl::Device device; // The device is selected by the user
             if (!select_device(argv[2], device)) return EXIT_FAILURE;
 
-            // TODO: initialize world here
-            print_info("Loading world");
-            print_warning("Not implemented yet");
-
             try
             {
                 print_info("Initializing graphical user interface");
@@ -48,10 +35,13 @@ int main(int argc, char *argv[])
                 interop::initialize(device, window->getSystemHandle());
                 print_info("Scheduler ready, interop is available");
 
+                print_info("Loading world");
+                World world;
+
                 try
                 {
-                    display::run(window); // May throw cl::Error
-                    display::finalize(window); // All done, exit
+                    display::run(window, world);
+                    display::finalize(window);
                 }
                 catch (const cl::Error &e)
                 {
@@ -72,8 +62,8 @@ int main(int argc, char *argv[])
         }
         catch (...)
         {
-            print_error("Caught unhandled exception.");
-            return EXIT_FAILURE; // Here, just abort
+            print_error("Caught unhandled exception");
+            return EXIT_FAILURE; // Fatal error here..
         }
 
         print_info("Exiting");

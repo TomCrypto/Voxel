@@ -1,15 +1,11 @@
 #include "setup/scheduler.hpp"
 #include "render/engine.hpp"
 
-#include "world/observer.hpp" // to move to world
-
-Engine::Engine(cl::Program subsampler,
-               cl::Program projection,
-               cl::Program integrator,
-               std::size_t width,
-               std::size_t height,
-               cl::ImageGL &image)
-    : image(image), frame(width, height)
+Engine::Engine(const cl::Program &subsampler,
+               const cl::Program &projection,
+               const cl::Program &integrator,
+               const cl::ImageGL &image)
+    : frame(image)
 {
     core.push_back(scheduler::acquire("core/geometry"));
     core.push_back(scheduler::acquire("core/frame_io"));
@@ -20,29 +16,20 @@ Engine::Engine(cl::Program subsampler,
     modules[Module::PROJECTION] = projection;
     modules[Module::INTEGRATOR] = integrator;
 
-    geometry = scheduler::alloc_buffer(geometry_o.bufSize(),
-                                 CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                 geometry_o.getPtr());
-
+    attach(frame);
     link();
 }
 
-void Engine::set_module(Module type, cl::Program module)
+void Engine::set_module(Module type, const cl::Program &module)
 {
     modules[type] = module;
-    clear_frame();
-    link();
+    link(); // new programs
 }
 
-void Engine::resize_frame(std::size_t width, std::size_t height,
-                          cl::ImageGL &image)
+void Engine::resize_frame(const cl::ImageGL &image)
 {
-    frame = Frame(width, height);
-    this->image = image;
-
-    frame.bind_to(this->render_k);
-    frame.bind_to(this->buf2tex_k);
-    scheduler::set_arg(buf2tex_k, "tex_data", this->image);
+    frame.resize(image);
+    frame.notify_cb(kernels);
 }
 
 void Engine::clear_frame(void)
@@ -53,27 +40,33 @@ void Engine::clear_frame(void)
 void Engine::sample(void)
 {
     frame.next();
-    scheduler::run(render_k, cl::NDRange(frame.width() * frame.height()));
+    scheduler::run(kernels["render"], cl::NDRange(frame.width() * frame.height()));
 }
 
 void Engine::draw(void)
 {
-    scheduler::run(buf2tex_k, cl::NDRange(frame.width() * frame.height()));
+    scheduler::run(kernels["buf2tex"], cl::NDRange(frame.width() * frame.height()));
+}
+
+void Engine::attach(const std::function
+                    <void(std::map<std::string, cl::Kernel>&)>
+                    &callback)
+{
+    callbacks.push_back(callback);
+    if (!kernels.empty()) callback(kernels);
+}
+
+void Engine::notify(void)
+{
+    for (auto &callback : callbacks) callback(kernels);
 }
 
 void Engine::link(void)
 {
-    std::vector<cl::Program> programs(this->core);
-    for(auto it = modules.begin(); it != modules.end(); ++it)
-        programs.push_back(it->second);
-
-    this->program = scheduler::link(programs, "renderer");
-    this->render_k = scheduler::get(this->program, "render");
-    this->buf2tex_k = scheduler::get(this->program, "buf2tex");
-
-    frame.bind_to(this->render_k);
-    frame.bind_to(this->buf2tex_k);
-    observer::bind_to(this->render_k);
-    scheduler::set_arg(render_k, "geometry", geometry);
-    scheduler::set_arg(buf2tex_k, "tex_data", image);
+    std::vector<cl::Program> programs(core); // link all programs
+    for(auto &it : modules) programs.push_back(it.second);
+    program = scheduler::link(programs, "renderer");
+    kernels = scheduler::get_all(program);
+    clear_frame(); // this is necessary
+    notify(); // notify all objects
 }

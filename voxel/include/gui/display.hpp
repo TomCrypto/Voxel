@@ -2,7 +2,7 @@
   *
   * @brief Graphical Display Interface
   *
-  * This file provides an interface to the graphical user interface.
+  * This file provides an encapsulation of the graphical user interface.
 **/
 
 #pragma once
@@ -10,6 +10,8 @@
 #include <SFML/Window.hpp>
 #include <memory>
 #include <string>
+
+#include "world/world.hpp"
 
 /** @namespace display
   *
@@ -33,8 +35,9 @@ namespace display
       * exits the program (or due to some other condition).
       *
       * @param window  The SFML window, as returned by \c initialize().
+      * @param world   The world to use for rendering.
     **/
-    void run(std::unique_ptr<sf::Window> &window);
+    void run(std::unique_ptr<sf::Window> &window, World &world);
 
     /** Finalizes the display, closing the window.
       *

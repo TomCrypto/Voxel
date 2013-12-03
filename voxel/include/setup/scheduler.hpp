@@ -4,8 +4,9 @@
 
 #include <CL/cl.hpp>
 #include <stdexcept>
-#include <vector>
 #include <string>
+#include <vector>
+#include <map>
 
 namespace scheduler
 {
@@ -24,6 +25,8 @@ namespace scheduler
 
     cl::Kernel get(const cl::Program &program,
                    const std::string &name);
+
+    std::map<std::string, cl::Kernel> get_all(const cl::Program &program);
 
     std::size_t get_arg(const cl::Kernel &kernel,
                    const std::string &name);

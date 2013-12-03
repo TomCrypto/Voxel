@@ -1,14 +1,19 @@
 #include "render/frame.hpp"
 
-Frame::Frame(std::size_t width, std::size_t height)
+Frame::Frame(const cl::ImageGL &image)
 {
-    info.width = width;
-    info.height = height;
+    resize(image);
+}
+
+void Frame::resize(const cl::ImageGL &image)
+{
+    this->image = image;
+    info.width = width();
+    info.height = height();
     info.counter = 0;
 
-    frame_buffer = scheduler::alloc_buffer(width * height * 16, CL_MEM_READ_WRITE);
+    frame_buffer = scheduler::alloc_buffer(width() * height() * 16, CL_MEM_READ_WRITE);
     frame_info = scheduler::alloc_buffer(sizeof(FrameInfo), CL_MEM_READ_ONLY);
-
     clear();
 }
 
@@ -19,28 +24,27 @@ void Frame::next(void)
     scheduler::write(frame_info, 0, sizeof(FrameInfo), &info);
 }
 
-void Frame::bind_to(cl::Kernel &kernel)
+void Frame::notify_cb(std::map<std::string, cl::Kernel> &kernels)
 {
-    scheduler::set_arg(kernel, "frm_data", frame_buffer);
-    scheduler::set_arg(kernel, "frm_info", frame_info);
-}
+    scheduler::set_arg(kernels["render"], "frm_data", frame_buffer);
+    scheduler::set_arg(kernels["render"], "frm_info", frame_info);
 
-void Frame::read(void *ptr)
-{
-    scheduler::read(frame_buffer, 0, info.width * info.height * 16, ptr);
+    scheduler::set_arg(kernels["buf2tex"], "frm_data", frame_buffer);
+    scheduler::set_arg(kernels["buf2tex"], "frm_info", frame_info);
+    scheduler::set_arg(kernels["buf2tex"], "tex_data", image);
 }
 
 void Frame::clear(void)
 {
-    scheduler::clear_buffer(frame_buffer, info.width * info.height * 16);
+    scheduler::clear_buffer(frame_buffer, width() * height() * 16);
 }
 
 size_t Frame::width()
 {
-    return info.width;
+    return image.getImageInfo<CL_IMAGE_WIDTH>();
 }
 
 size_t Frame::height()
 {
-    return info.height;
+    return image.getImageInfo<CL_IMAGE_HEIGHT>();
 }

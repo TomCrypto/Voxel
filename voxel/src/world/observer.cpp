@@ -53,7 +53,7 @@ static void update(void)
 
 void observer::setup(void)
 {
-    mem = scheduler::alloc_buffer(sizeof(buffer), CL_MEM_READ_ONLY, 0);
+    mem = scheduler::alloc_buffer(sizeof(buffer), CL_MEM_READ_ONLY);
 }
 
 void observer::move_to(const float3 &pos)

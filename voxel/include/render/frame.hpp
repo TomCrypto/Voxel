@@ -3,6 +3,8 @@
 #pragma once
 
 #include <CL/cl.hpp>
+#include <string>
+#include <map>
 
 #include "setup/scheduler.hpp"
 
@@ -15,13 +17,13 @@ struct FrameInfo
 class Frame
 {
     public:
-        Frame(std::size_t width, std::size_t height);
+        Frame(const cl::ImageGL &image);
 
         void next();
 
-        void bind_to(cl::Kernel &kernel);
+        void notify_cb(std::map<std::string, cl::Kernel> &kernels);
 
-        void read(void *ptr);
+        void resize(const cl::ImageGL &image);
 
         void clear(void);
 
@@ -29,6 +31,7 @@ class Frame
         size_t height();
 
     private:
+        cl::ImageGL image;
         cl::Buffer frame_buffer;
         cl::Buffer frame_info;
         FrameInfo info;

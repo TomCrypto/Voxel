@@ -74,6 +74,9 @@ kernel void buf2tex(global             float4 *frm_data,
                     constant  struct FRM_INFO *frm_info,
                     write_only      image2d_t  tex_data)
 {
-    write_imagef(tex_data, convert_int2(resolve(frm_info)),
-                 (float4)(get_color(frm_info, frm_data), 1));
+    if (has_work(frm_info))
+    {
+        write_imagef(tex_data, convert_int2(resolve(frm_info)),
+                     (float4)(get_color(frm_info, frm_data), 1));
+    }
 }

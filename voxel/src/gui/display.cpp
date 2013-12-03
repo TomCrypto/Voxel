@@ -8,14 +8,12 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "world/observer.hpp" // to move to world
-
 #include "modules/integrators.hpp"
 #include "modules/subsamplers.hpp"
 #include "modules/projections.hpp"
 
-#include "setup/interop.hpp"
 #include "render/engine.hpp"
+#include "setup/interop.hpp"
 
 using std::unique_ptr;
 
@@ -24,14 +22,6 @@ static const std::size_t initial_h = 600, initial_y = 200;
 static const auto default_subsampler = subsamplers::modules::AAx4;
 static const auto default_projection = projections::modules::PERSPECTIVE;
 static const auto default_integrator = integrators::modules::DEPTH;
-
-static Engine create_engine(cl::ImageGL &image)
-{
-    return Engine(subsamplers::get(default_subsampler),
-                  projections::get(default_projection),
-                  integrators::get(default_integrator),
-                  initial_w, initial_h, image);
-}
 
 static void setup_tweak_bar(void)
 {
@@ -69,22 +59,6 @@ unique_ptr<sf::Window> display::initialize(const std::string &name)
     return window;
 }
 
-static void resize_window(Engine &engine, cl::ImageGL &image,
-                          size_t width, size_t height)
-{
-    interop::free_image(image);
-    atb::window_resize(width, height);
-    image = interop::get_image(width, height);
-    engine.resize_frame(width, height, image);
-}
-
-static void display_frame(cl::ImageGL &image, unique_ptr<sf::Window> &window)
-{
-    interop::draw_image(image);
-    atb::draw(); // overlay
-    window->display();
-}
-
 static void check_modules(Engine &engine)
 {
     if (atb::has_changed("subsampler"))
@@ -109,39 +83,33 @@ static void check_modules(Engine &engine)
     }
 }
 
-static void process_input(Engine &engine)
+static void process_input(Engine &engine, World &world)
 {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
     {
-        observer::forward(+atb::get_var<float>("move_speed") * 1e-2f);
+        world.forward(+atb::get_var<float>("move_speed") * 1e-2f);
         engine.clear_frame();
     }
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
     {
-        observer::forward(-atb::get_var<float>("move_speed") * 1e-2f);
+        world.forward(-atb::get_var<float>("move_speed") * 1e-2f);
         engine.clear_frame();
     }
 }
 
-void display::run(unique_ptr<sf::Window> &window)
+void display::run(unique_ptr<sf::Window> &window, World &world)
 {
-    // begin (MOVE THIS TO WORLD LATER ON)
-
-    observer::setup();
-
-    observer::move_to(math::float3(-0.15, -0.60, -0.20));
-    observer::look_at(math::float3(0, -0.5, 1));
-    observer::set_fov(90);
-
-    // end
-
-    print_info("Creating initial CL/GL image");
+    print_info("Creating initial CL/GL image to display output");
     atb::window_resize(initial_w, initial_h); // must resize now
     cl::ImageGL image = interop::get_image(initial_w, initial_h);
 
-    print_info("Starting event loop");
-    Engine engine = create_engine(image);
+    print_info("Starting rendering engine and event loop");
+    Engine engine(subsamplers::get(default_subsampler),
+                  projections::get(default_projection),
+                  integrators::get(default_integrator),
+                  image);
+    engine.attach(world);
 
     /* To track movement. */
     sf::Vector2u cursor_pos;
@@ -185,16 +153,20 @@ void display::run(unique_ptr<sf::Window> &window)
                         cursor_pos = pos;
 
                         float speed = atb::get_var<float>("rot_speed");
-                        observer::turn_h(-dx * speed);
-                        observer::turn_v(+dy * speed);
+                        world.turn_h(-dx * speed);
+                        world.turn_v(+dy * speed);
                         engine.clear_frame();
                     }
                 }
             }
             /* Has window been resized by the user? */
             else if (event.type == sf::Event::Resized)
-                resize_window(engine, image, event.size.width,
-                                             event.size.height);
+            {
+                interop::free_image(image);
+                atb::window_resize(event.size.width, event.size.height);
+                std::size_t w = event.size.width, h = event.size.height;
+                engine.resize_frame(image = interop::get_image(w, h));
+            }
             /* We handle any exit conditions here. */
             else if (event.type == sf::Event::Closed)
                 return;
@@ -206,8 +178,7 @@ void display::run(unique_ptr<sf::Window> &window)
             window->setMouseCursorVisible(!mouse_down);
         }
 
-        /* GUI bookkeeping. */
-        process_input(engine);
+        process_input(engine, world);
         check_modules(engine);
 
         interop::synchronize_cl(image); /* NOW RENDERING | OpenCL ----------- */
@@ -219,7 +190,9 @@ void display::run(unique_ptr<sf::Window> &window)
 
         interop::synchronize_gl(image); /* NOW DISPLAYING | OpenGL ---------- */
 
-        display_frame(image, window);
+        interop::draw_image(image);
+        atb::draw(); // overlay
+        window->display();
         clock.restart();
     }
 }

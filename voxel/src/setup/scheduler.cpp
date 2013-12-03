@@ -81,6 +81,30 @@ cl::Kernel scheduler::get(const cl::Program &program,
     return cl::Kernel(program, name.c_str());
 }
 
+std::map<std::string, cl::Kernel> scheduler::get_all(const cl::Program &program)
+{
+    cl_uint num_kernels;
+    cl_int err;
+
+    err = clCreateKernelsInProgram(program(), 0, 0, &num_kernels);
+    if (err) throw new cl::Error(err, "clCreateKernelsInProgram");
+    if (num_kernels == 0) throw new std::logic_error("No kernels found");
+
+    std::vector<cl_kernel> kernel_list(num_kernels);
+    err = clCreateKernelsInProgram(program(), num_kernels, &kernel_list[0], 0);
+    if (err) throw new cl::Error(err, "clCreateKernelsInProgram");
+
+    std::map<std::string, cl::Kernel> kernels;
+    for (auto &kernel_base : kernel_list)
+    {
+        cl::Kernel kernel(kernel_base);
+        std::string name = kernel.getInfo<CL_KERNEL_FUNCTION_NAME>();
+        kernels.insert(std::pair<std::string, cl::Kernel>(name, kernel));
+    }
+
+    return kernels;
+}
+
 std::size_t scheduler::get_arg(const cl::Kernel &kernel,
                                const std::string &name)
 {
