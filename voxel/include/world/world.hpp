@@ -2,7 +2,6 @@
 
 #include <CL/cl.hpp>
 
-#include <functional>
 #include <map>
 
 #include "geometry/voxel_test.hpp"

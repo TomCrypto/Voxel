@@ -17,11 +17,9 @@ float3 integrate(struct Ray ray, global struct SVO_NODE *geometry,
         float sinX = sincos(pt.x, &cosX);
         float sinY = sincos(pt.y, &cosY);
 
-        float3 new_dir = (float3)(sinY * cosX,
-                                  cosY,
-                                  sinY * sinX);
-
-        ray.d = new_dir;
+        ray.d = (float3)(sinY * cosX,
+                         cosY,
+                         sinY * sinX);
 
         if (!occludes(geometry, ray, INFINITY)) return (float3)(1, 1, 1);
     }

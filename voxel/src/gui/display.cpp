@@ -40,7 +40,7 @@ static void setup_tweak_bar(void)
     atb::add_var("rot_speed", "Rotation Speed", TW_TYPE_FLOAT,
                  "min=0.5 max=10 step=0.1 group='Miscellaneous'");
     atb::add_var("move_speed", "Movement Speed", TW_TYPE_FLOAT,
-                 "min=0.5 max=10 step=0.1 group='Miscellaneous'");
+                 "min=0.1 max=10 step=0.1 group='Miscellaneous'");
 
     atb::set_var("subsampler", default_subsampler);
     atb::set_var("projection", default_projection);
@@ -119,7 +119,7 @@ static void process_input(Engine &engine, World &world)
 
 void display::run(unique_ptr<sf::Window> &window, World &world)
 {
-    print_info("Creating initial CL/GL image to display output");
+    print_info("Attempting to create initial interop image");
     atb::window_resize(initial_w, initial_h); // must resize now
     cl::ImageGL image = interop::get_image(initial_w, initial_h);
 

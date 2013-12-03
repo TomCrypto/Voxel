@@ -34,9 +34,10 @@ int main(int argc, char *argv[])
                 print_info("Selecting preferred interop interface");
                 interop::initialize(device, window->getSystemHandle());
                 print_info("Scheduler ready, interop is available");
-
-                print_info("Loading world");
+                print_info("Loading world from user-provided file");
+                print_warning("Not implemented yet");
                 World world;
+                print_info("World ready");
 
                 try
                 {
