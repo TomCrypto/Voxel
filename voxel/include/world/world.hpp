@@ -1,10 +1,14 @@
+// this will contain the world later on (e.g. the voxel disk/memory streaming
+// code, the geometry buffer, the observer, the material database, etc....)
+
 #pragma once
 
 #include <CL/cl.hpp>
-
+#include <string>
 #include <map>
 
 #include "geometry/voxel_test.hpp"
+#include "world/observer.hpp"
 
 class World
 {
@@ -21,4 +25,5 @@ class World
 
         VoxelTest geometry_o;
         cl::Buffer geometry;
+        Observer observer;
 };

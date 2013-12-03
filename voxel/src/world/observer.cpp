@@ -1,26 +1,20 @@
 #include "world/observer.hpp"
 
-#include <CL/cl_platform.h>
+#include "setup/scheduler.hpp"
+
 #include <cmath>
 
-#define M_PI 3.14159265f
+// sigh
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#ifndef M_PI_2
+#define M_PI_2 (3.14159265358979323846 * 0.5)
+#endif
 
 using namespace math;
-
-static cl::Buffer mem;
-
-static struct
-{
-    cl_float3 pos, dir;
-    cl_float3 plane[4];
-} __attribute__((packed)) buffer;
-
-static struct
-{
-    float3 pos, dir;
-    float yaw, pitch, roll;
-    float fov;
-} data;
 
 static cl_float3 cl_vec(float x, float y, float z)
 {
@@ -31,7 +25,7 @@ static cl_float3 cl_vec(float x, float y, float z)
     return val;
 }
 
-static void update(void)
+void Observer::update(void)
 {
     float3x3 view = basis2(data.dir, float3(-sin(data.roll), cos(data.roll), 0));
     float3 plane[4];
@@ -51,19 +45,19 @@ static void update(void)
     scheduler::write(mem, 0, sizeof(buffer), &buffer);
 }
 
-void observer::setup(void)
+Observer::Observer()
 {
     mem = scheduler::alloc_buffer(sizeof(buffer), CL_MEM_READ_ONLY);
 }
 
-void observer::move_to(const float3 &pos)
+void Observer::move_to(const float3 &pos)
 {
     data.pos = pos;
     update();
 }
 
 
-void observer::look_at(const float3 &dir)
+void Observer::look_at(const float3 &dir)
 {
     data.dir = dir;
     data.yaw = atan2(dir.z, dir.x);
@@ -72,39 +66,41 @@ void observer::look_at(const float3 &dir)
     update();
 }
 
-void observer::forward(const float depth)
+void Observer::forward(const float depth)
 {
     data.pos += data.dir * depth;
     update();
 }
 
-void observer::turn_h(const float amount)
+void Observer::turn_h(const float amount)
 {
     data.yaw += amount;
     data.dir = spherical(data.yaw, data.pitch);
     update();
 }
 
-void observer::turn_v(const float amount)
+void Observer::turn_v(const float amount)
 {
     data.pitch += amount;
+    if (data.pitch < 0.01f) data.pitch = 0.01f;
+    if (data.pitch > M_PI - 0.01f) data.pitch = M_PI - 0.01f;
     data.dir = spherical(data.yaw, data.pitch);
     update();
 }
 
-void observer::roll(float amount)
+void Observer::roll(float amount)
 {
     data.roll += amount;
     update();
 }
 
-void observer::set_fov(float fov)
+void Observer::set_fov(float fov)
 {
     data.fov = fov * M_PI / 180;
     update();
 }
 
-void observer::bind_to(cl::Kernel &kernel)
+void Observer::notify_cb(std::map<std::string, cl::Kernel> &kernels)
 {
-    scheduler::set_arg(kernel, "observer", mem);
+    scheduler::set_arg(kernels["render"], "observer", mem);
 }
