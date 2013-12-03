@@ -5,6 +5,8 @@
 
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/Window.hpp>
+#include <sstream>
+#include <iomanip>
 #include <cstddef>
 #include <cstdint>
 
@@ -17,6 +19,8 @@
 
 using std::unique_ptr;
 
+static std::string window_title;
+static const double SPP_REFRESH_RATE = 1.5;
 static const std::size_t initial_w = 800, initial_x = 200;
 static const std::size_t initial_h = 600, initial_y = 200;
 static const auto default_subsampler = subsamplers::modules::AAx4;
@@ -48,6 +52,7 @@ static void setup_tweak_bar(void)
 
 unique_ptr<sf::Window> display::initialize(const std::string &name)
 {
+    window_title = name; // Save the window name (for appending later on)
     auto mode = sf::VideoMode(initial_w, initial_h); // Window dimensions
     auto style = sf::Style::Resize | sf::Style::Titlebar | sf::Style::Close;
     auto window = unique_ptr<sf::Window>(new sf::Window(mode, name, style));
@@ -57,6 +62,20 @@ unique_ptr<sf::Window> display::initialize(const std::string &name)
     atb::initialize("Configuration");
     setup_tweak_bar();
     return window;
+}
+
+static void update_title(unique_ptr<sf::Window> &window,
+                         const std::string &title,
+                         double samples)
+{
+    std::stringstream fmt(title);
+    fmt << " (samples/second: ";
+    fmt << std::setprecision(1);
+    fmt << std::fixed;
+    fmt << samples;
+    fmt << ")";
+
+    window->setTitle(fmt.str());
 }
 
 static void check_modules(Engine &engine)
@@ -111,9 +130,9 @@ void display::run(unique_ptr<sf::Window> &window, World &world)
                   image);
     engine.attach(world);
 
-    /* To track movement. */
     sf::Vector2u cursor_pos;
     bool mouse_down = false;
+    size_t sample_count = 0;
     sf::Clock clock;
 
     while (window->isOpen())
@@ -181,11 +200,20 @@ void display::run(unique_ptr<sf::Window> &window, World &world)
         process_input(engine, world);
         check_modules(engine);
 
+        if (clock.getElapsedTime().asSeconds() >= SPP_REFRESH_RATE)
+        {
+            double elapsed = clock.getElapsedTime().asSeconds();
+            double samples = (double)sample_count / elapsed;
+            update_title(window, window_title, samples);
+            sample_count = 0;
+            clock.restart();
+        }
+
         interop::synchronize_cl(image); /* NOW RENDERING | OpenCL ----------- */
 
         size_t samples = atb::get_var<uint32_t>("work_ratio");
         for (size_t t = 0; t < samples; ++t) engine.sample();
-
+        sample_count += samples;
         engine.draw();
 
         interop::synchronize_gl(image); /* NOW DISPLAYING | OpenGL ---------- */
@@ -193,7 +221,6 @@ void display::run(unique_ptr<sf::Window> &window, World &world)
         interop::draw_image(image);
         atb::draw(); // overlay
         window->display();
-        clock.restart();
     }
 }
 

@@ -23,11 +23,11 @@ void Frame::next(void)
 
     scheduler::write(frame_info, 0, sizeof(FrameInfo), &info);
 }
-
 void Frame::notify_cb(std::map<std::string, cl::Kernel> &kernels)
 {
     scheduler::set_arg(kernels["render"], "frm_data", frame_buffer);
     scheduler::set_arg(kernels["render"], "frm_info", frame_info);
+
 
     scheduler::set_arg(kernels["buf2tex"], "frm_data", frame_buffer);
     scheduler::set_arg(kernels["buf2tex"], "frm_info", frame_info);
