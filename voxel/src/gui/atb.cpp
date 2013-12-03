@@ -129,6 +129,7 @@ static void define_types(void)
         {subsamplers::modules::AAx2,        "2xAA"},
         {subsamplers::modules::AAx4,        "4xAA"},
         {subsamplers::modules::AAx8,        "8xAA"},
+        {subsamplers::modules::AAx16,       "16xAA"},
     },   subsamplers::modules::COUNT_);
 
     projections_t = TwDefineEnum("Projection", (const TwEnumVal[])
