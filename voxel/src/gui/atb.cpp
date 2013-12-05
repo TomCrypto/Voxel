@@ -135,6 +135,7 @@ static void define_types(void)
     projections_t = TwDefineEnum("Projection", (const TwEnumVal[])
     {
         {projections::modules::PERSPECTIVE, "Perspective"},
+        {projections::modules::FISHEYE,     "Fisheye"},
     },   projections::modules::COUNT_);
 
     integrators_t = TwDefineEnum("Integrator", (const TwEnumVal[])

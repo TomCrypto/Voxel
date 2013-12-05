@@ -32,6 +32,10 @@ float3 get_position(constant struct Observer *observer);
 **/
 float3 get_direction(constant struct Observer *observer);
 
+float get_fov(constant struct Observer *observer);
+float get_yaw(constant struct Observer *observer);
+float get_pitch(constant struct Observer *observer);
+
 /** Retrieves a point on the observer's focal plane.
   *
   * @param observer  The observer.

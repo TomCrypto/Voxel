@@ -53,11 +53,11 @@ float2 resolve(constant struct Frm_Info *frm_info);
 /** Converts an (x, y) integer coordinate to an (u, v) normalized coordinate.
   *
   * @param frm_info  The frame information structure.
-  * @param v         The integer coordinate.
+  * @param p         The integer coordinate.
   *
   * @return The corresponding normalized coordinate.
 **/
-float2 get_uv(constant struct Frm_Info *frm_info, float2 v);
+float2 get_uv(constant struct Frm_Info *frm_info, float2 p);
 
 /** Calculates the aspect ratio of the frame buffer.
   *

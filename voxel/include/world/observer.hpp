@@ -31,6 +31,8 @@ class Observer
         {
             cl_float3 pos, dir;
             cl_float3 plane[4];
+            cl_float phi, theta;
+            cl_float fov;
         } __attribute__((packed));
 
         struct Data

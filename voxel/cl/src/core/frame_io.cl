@@ -24,9 +24,9 @@ float2 resolve(constant struct Frm_Info *frm_info)
                     frm_info->dim.y - 1 - get_global_id(0) / frm_info->dim.x);
 }
 
-float2 get_uv(constant struct Frm_Info *frm_info, float2 v)
+float2 get_uv(constant struct Frm_Info *frm_info, float2 p)
 {
-    return (v / convert_float2(frm_info->dim.xy));
+    return (p / convert_float2(frm_info->dim.xy));
 }
 
 float get_ratio(constant struct Frm_Info *frm_info)

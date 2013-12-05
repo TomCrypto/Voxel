@@ -25,6 +25,11 @@ namespace projections
         return scheduler::acquire("modules/projections/perspective");
     }
 
+    inline cl::Program fisheye(void)
+    {
+        return scheduler::acquire("modules/projections/fisheye");
+    }
+
     /**************************************************************************/
 
     /** @enum modules
@@ -34,6 +39,7 @@ namespace projections
     enum modules
     {
         PERSPECTIVE,                             // Perspective projection
+        FISHEYE,                                 // Fisheye projection
 
         COUNT_
     };
@@ -49,6 +55,7 @@ namespace projections
         switch (projection)
         {
                case PERSPECTIVE: return perspective();
+               case     FISHEYE: return fisheye();
             default            : throw std::logic_error("Unknown projection");
         }
     }

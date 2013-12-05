@@ -42,6 +42,10 @@ void Observer::update(void)
     for (size_t t = 0; t < 4; ++t)
         buffer.plane[t] = cl_vec(plane[t].x, plane[t].y, plane[t].z);
 
+    buffer.phi = data.yaw;
+    buffer.theta = data.pitch;
+    buffer.fov = data.fov;
+
     scheduler::write(mem, 0, sizeof(buffer), &buffer);
 }
 
@@ -59,7 +63,7 @@ void Observer::move_to(const float3 &pos)
 
 void Observer::look_at(const float3 &dir)
 {
-    data.dir = dir;
+    data.dir = normalize(dir);
     data.yaw = atan2(dir.z, dir.x);
     data.pitch = acos(dir.y);
     data.roll = 0;
