@@ -30,6 +30,8 @@ struct PRNG
 **/
 struct PRNG prng_init(ulong4 instance_id);
 
+/********************************* FLOAT RAND *********************************/
+
 /** This function computes up to four uniform pseudorandom reals.
   *
   * @param prng  A pointer to a PRNG state.
@@ -55,3 +57,69 @@ float2 rand2(struct PRNG *prng);
   * @see rand4()
 **/
 float rand(struct PRNG *prng);
+
+/******************************** INTEGER RAND ********************************/
+
+/** This function computes up to four uniform pseudorandom integers in a range.
+  *
+  * @param prng  A pointer to a PRNG state.
+  * @param n     The maximum value (exclusive).
+  *
+  * @returns Four uniform pseudorandom numbers in [0..n).
+  *
+  * @remarks \c n must be greater than 0 (and should be greater than 1).
+  *
+  * @remarks There may be a small bias for non-power of two values of \c n.
+**/
+uint4 rand4i(struct PRNG *prng, uint n);
+
+/** Utility function to get three pseudorandom integers in a range.
+  *
+  * @see rand4()
+**/
+uint3 rand3i(struct PRNG *prng, uint n);
+
+/** Utility function to get two pseudorandom integers in a range.
+  *
+  * @see rand4()
+**/
+uint2 rand2i(struct PRNG *prng, uint n);
+
+/** Utility function to get a single pseudorandom integer in a range.
+  *
+  * @see rand4()
+**/
+uint randi(struct PRNG *prng, uint n);
+
+/********************************** LONG RAND *********************************/
+
+/** This function computes up to four uniform pseudorandom integers in a range.
+  *
+  * @param prng  A pointer to a PRNG state.
+  * @param n     The maximum value (exclusive).
+  *
+  * @returns Four uniform pseudorandom numbers in [0..n).
+  *
+  * @remarks \c n must be greater than 0 (and should be greater than 1).
+  *
+  * @remarks There may be a small bias for non-power of two values of \c n.
+**/
+ulong4 rand4l(struct PRNG *prng, ulong n);
+
+/** Utility function to get three pseudorandom integers in a range.
+  *
+  * @see rand4()
+**/
+ulong3 rand3l(struct PRNG *prng, ulong n);
+
+/** Utility function to get two pseudorandom integers in a range.
+  *
+  * @see rand4()
+**/
+ulong2 rand2l(struct PRNG *prng, ulong n);
+
+/** Utility function to get a single pseudorandom integer in a range.
+  *
+  * @see rand4()
+**/
+ulong randl(struct PRNG *prng, ulong n);

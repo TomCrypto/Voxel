@@ -14,17 +14,13 @@
 
 #pragma once
 
-/** @struct FRM_INFO
+/** @struct Frm_Info
   *
   * This structure contains details about the frame buffer, its dimensions, and
   * other data relating to the current frame being rendered (it should not need
   * to be parsed by any unit other than this source file).
 **/
-struct FRM_INFO
-{
-    uint2 dim;
-    ulong ctr;
-};
+struct Frm_Info;
 
 /** Checks whether this work item has work to do.
   *
@@ -33,7 +29,7 @@ struct FRM_INFO
   * @return \c false if no work is available for this work item - in which case
   *         it should just return immediately - and \c true otherwise.
 **/
-bool has_work(constant struct FRM_INFO *frm_info);
+bool has_work(constant struct Frm_Info *frm_info);
 
 /** Computes the frame counter, a monotonically increasing integer, incremented
   * each frame (useful for selecting which subsampler sample point to use).
@@ -44,7 +40,7 @@ bool has_work(constant struct FRM_INFO *frm_info);
   *
   * @remarks The value returned will be the same for all work items.
 **/
-ulong get_counter(constant struct FRM_INFO *frm_info);
+ulong get_counter(constant struct Frm_Info *frm_info);
 
 /** Resolves the (x, y) integer screen coordinates of a work item.
   *
@@ -52,7 +48,7 @@ ulong get_counter(constant struct FRM_INFO *frm_info);
   *
   * @return The work item's coordinates.
 **/
-float2 resolve(constant struct FRM_INFO *frm_info);
+float2 resolve(constant struct Frm_Info *frm_info);
 
 /** Converts an (x, y) integer coordinate to an (u, v) normalized coordinate.
   *
@@ -61,7 +57,7 @@ float2 resolve(constant struct FRM_INFO *frm_info);
   *
   * @return The corresponding normalized coordinate.
 **/
-float2 get_uv(constant struct FRM_INFO *frm_info, float2 v);
+float2 get_uv(constant struct Frm_Info *frm_info, float2 v);
 
 /** Calculates the aspect ratio of the frame buffer.
   *
@@ -69,7 +65,7 @@ float2 get_uv(constant struct FRM_INFO *frm_info, float2 v);
   *
   * @return The aspect ratio (width over height).
 **/
-float get_ratio(constant struct FRM_INFO *frm_info);
+float get_ratio(constant struct Frm_Info *frm_info);
 
 /** Accumulates a color produced by the kernel into the frame buffer.
   *
@@ -80,7 +76,7 @@ float get_ratio(constant struct FRM_INFO *frm_info);
   * @remarks This function invokes undefined behaviour if the work item did not
   *          get a valid screen coordinate via the \c resolve() function.
 **/
-void accumulate(constant struct FRM_INFO *frm_info,
+void accumulate(constant struct Frm_Info *frm_info,
                 global            float4 *frm_data,
                                   float3  computed);
 
@@ -91,8 +87,18 @@ void accumulate(constant struct FRM_INFO *frm_info,
   *
   * @return The color in the frame buffer.
 **/
-float3 get_color(constant struct FRM_INFO *frm_info,
+float3 get_color(constant struct Frm_Info *frm_info,
                  global            float4 *frm_data);
+
+/** Copies this work item's frame buffer value to the output texture.
+  *
+  * @param frm_info  The frame information structure.
+  * @param frm_data  The frame buffer.
+  * @param tex_data  The output texture.
+**/
+void tex_copy(constant struct Frm_Info *frm_info,
+              global            float4 *frm_data,
+              write_only     image2d_t  tex_data);
 
 /** This function returns an ID, uniquely identifying the current frame and the
   * current work item such that no two work items from any frame share the same
@@ -105,4 +111,4 @@ float3 get_color(constant struct FRM_INFO *frm_info,
   * @remarks This is used (among other things) to produce a unique seed for the
   *          PRNG, in order to get different pseudorandom numbers every time.
 **/
-ulong4 guid(constant struct FRM_INFO *frm_info);
+ulong4 guid(constant struct Frm_Info *frm_info);

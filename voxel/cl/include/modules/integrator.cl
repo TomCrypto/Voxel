@@ -35,5 +35,5 @@
   *
   * @return A vector representing RGB intensity along this ray.
 **/
-float3 integrate(struct Ray ray, global struct SVO_NODE *geometry,
+float3 integrate(struct Ray ray, global struct Geometry *geometry,
                  struct PRNG *prng);

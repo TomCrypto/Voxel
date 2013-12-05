@@ -113,15 +113,15 @@ std::size_t scheduler::get_arg(const cl::Kernel &kernel,
 
     if (kernel_name == "render")
     {
-        if (name == "frm_data") return 0;
-        if (name == "frm_info") return 1;
+        if (name == "frm_info") return 0;
+        if (name == "frm_data") return 1;
         if (name == "geometry") return 2;
         if (name == "observer") return 3;
     }
-    else if (kernel_name == "buf2tex")
+    else if (kernel_name == "interop_copy")
     {
-        if (name == "frm_data") return 0;
-        if (name == "frm_info") return 1;
+        if (name == "frm_info") return 0;
+        if (name == "frm_data") return 1;
         if (name == "tex_data") return 2;
     }
 #else

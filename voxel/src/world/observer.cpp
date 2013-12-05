@@ -31,10 +31,10 @@ void Observer::update(void)
     float3 plane[4];
 
     float z = 1.0f / tan(data.fov * 0.5f);
-    plane[0] = view * normalize(float3(-1.0f, +1.0f, z));
-    plane[1] = view * normalize(float3(+1.0f, +1.0f, z));
-    plane[2] = view * normalize(float3(+1.0f, -1.0f, z));
-    plane[3] = view * normalize(float3(-1.0f, -1.0f, z));
+    plane[0] = data.pos + view * normalize(float3(-1.0f, +1.0f, z));
+    plane[1] = data.pos + view * normalize(float3(+1.0f, +1.0f, z));
+    plane[2] = data.pos + view * normalize(float3(+1.0f, -1.0f, z));
+    plane[3] = data.pos + view * normalize(float3(-1.0f, -1.0f, z));
 
     buffer.pos = cl_vec(data.pos.x, data.pos.y, data.pos.z);
     buffer.dir = cl_vec(data.dir.x, data.dir.y, data.dir.z);

@@ -33,8 +33,8 @@
   * @param ratio     Aspect ratio (width over height).
   *
   * @return The corresponding camera ray.
-  * 
+  *
   * @remarks The returned direction must be normalized.
 **/
-struct Ray project(constant struct OBSERVER *observer,
+struct Ray project(constant struct Observer *observer,
                    float u, float v, float ratio);

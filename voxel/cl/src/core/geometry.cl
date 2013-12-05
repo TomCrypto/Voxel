@@ -3,6 +3,13 @@
 #include <core/geometry.cl>
 #include <core/math_lib.cl>
 
+struct Geometry
+{
+    uint child[8];
+};
+
+typedef struct Geometry SVO_NODE;
+
 typedef struct STACK_ITEM
 {
     uint offset;
@@ -15,7 +22,7 @@ float3 get_light(void)
     return (float3)(0.2f, -0.35f, 0.3f);
 }
 
-bool traverse(global struct SVO_NODE *geometry,
+bool traverse(global struct Geometry *geometry,
               const struct Ray ray, float range,
               float *nearest)
 {
@@ -44,7 +51,7 @@ bool traverse(global struct SVO_NODE *geometry,
             }
             else
             {
-                struct SVO_NODE current = geometry[s.offset];
+                SVO_NODE current = geometry[s.offset];
                 for (size_t t = 0; t < 8; ++t)
                 {
                     uint child = current.child[t];
@@ -64,7 +71,7 @@ bool traverse(global struct SVO_NODE *geometry,
     return *nearest < range;
 }
 
-bool occlude(global struct SVO_NODE *geometry,
+bool occlude(global struct Geometry *geometry,
              const struct Ray ray, float range)
 {
     STACK_ITEM stack[20];
@@ -89,7 +96,7 @@ bool occlude(global struct SVO_NODE *geometry,
             }
             else
             {
-                struct SVO_NODE current = geometry[s.offset];
+                SVO_NODE current = geometry[s.offset];
                 for (size_t t = 0; t < 8; ++t)
                 {
                     uint child = current.child[t];
@@ -109,12 +116,12 @@ bool occlude(global struct SVO_NODE *geometry,
     return false;
 }
 
-bool occludes(__global struct SVO_NODE *geometry, const struct Ray ray, float range)
+bool occludes(__global struct Geometry *geometry, const struct Ray ray, float range)
 {
     return occlude(geometry, ray, range);
 }
 
-bool depth_test(__global struct SVO_NODE *geometry, const struct Ray ray, float range, float *depth)
+bool depth_test(__global struct Geometry *geometry, const struct Ray ray, float range, float *depth)
 {
     return traverse(geometry, ray, range, depth);
 }

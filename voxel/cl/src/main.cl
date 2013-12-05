@@ -20,8 +20,8 @@
 #include <core/geometry.cl>
 
 /** Files in the `modules` folder are interfaces to the various types of module
-  * such as projection models, integrators, and so on, which directly integrate
-  * with the rendering pipeline (this excludes post-processing kernels).
+  * such as projection models, integrators, and so on, which directly plug into
+  * the rendering pipeline (this excludes post-processing kernels).
   *
   * @remarks Modules are made available to the renderer at link time.
 **/
@@ -38,17 +38,17 @@
   *          voxel octree and explicit BRDF's, via a templated module selection
   *          system, implemented in OpenCL 1.2 via link-time module resolution.
   *
-  * @param frm_data  The renderer's frame buffer encoded in RGBn format.
   * @param frm_info  The frame information structure, see `frame_io.cl`.
+  * @param frm_data  The renderer's frame buffer encoded in RGBn format.
   * @param geometry  The sparse voxel octree (in compact tree encoding).
   * @param observer  The observer, which contains view-dependent params.
   * @param material  The material tables (as a 2D isotropic BRDF array).
   * @param sampling  The material data as inverse-sampled distributions.
 **/
-kernel void render(global             float4 *frm_data,
-                   constant  struct FRM_INFO *frm_info,
-                   global    struct SVO_NODE *geometry,
-                   constant  struct OBSERVER *observer
+kernel void render(constant  struct Frm_Info *frm_info,
+                   global               void *frm_data,
+                   global    struct Geometry *geometry,
+                   constant  struct Observer *observer
                    /*read_only image2d_array_t  material,
                    read_only image2d_array_t  sampling*/)
 {
@@ -70,13 +70,16 @@ kernel void render(global             float4 *frm_data,
     }
 }
 
-kernel void buf2tex(global             float4 *frm_data,
-                    constant  struct FRM_INFO *frm_info,
-                    write_only      image2d_t  tex_data)
+/** This kernel is required to copy the frame buffer into the interop image, so
+  * that the OpenGL implementation can display the frame buffer on the screen.
+  *
+  * @param frm_info  The frame information structure, see `frame_io.cl`.
+  * @param frm_data  The renderer's frame buffer encoded in RGBn format.
+  * @param tex_data  The interop image (of a compatible texture format).
+**/
+kernel void interop_copy(constant  struct Frm_Info *frm_info,
+                         global               void *frm_data,
+                         write_only      image2d_t  tex_data)
 {
-    if (has_work(frm_info))
-    {
-        write_imagef(tex_data, convert_int2(resolve(frm_info)),
-                     (float4)(get_color(frm_info, frm_data), 1));
-    }
+    if (has_work(frm_info)) tex_copy(frm_info, frm_data, tex_data);
 }

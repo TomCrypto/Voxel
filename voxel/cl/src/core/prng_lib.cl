@@ -61,3 +61,45 @@ float rand(struct PRNG *prng)
 {
     return rand4(prng).x;
 }
+
+uint4 rand4i(struct PRNG *prng, uint n)
+{
+    renew(&prng->state, prng->key);
+    return convert_uint4(prng->state) % n;
+}
+
+uint3 rand3i(struct PRNG *prng, uint n)
+{
+    return rand4i(prng, n).xyz;
+}
+
+uint2 rand2i(struct PRNG *prng, uint n)
+{
+    return rand4i(prng, n).xy;
+}
+
+uint randi(struct PRNG *prng, uint n)
+{
+    return rand4i(prng, n).x;
+}
+
+ulong4 rand4l(struct PRNG *prng, ulong n)
+{
+    renew(&prng->state, prng->key);
+    return prng->state % n;
+}
+
+ulong3 rand3l(struct PRNG *prng, ulong n)
+{
+    return rand4l(prng, n).xyz;
+}
+
+ulong2 rand2l(struct PRNG *prng, ulong n)
+{
+    return rand4l(prng, n).xy;
+}
+
+ulong randl(struct PRNG *prng, ulong n)
+{
+    return rand4l(prng, n).x;
+}

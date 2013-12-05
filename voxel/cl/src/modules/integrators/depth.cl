@@ -2,7 +2,7 @@
 
 #include <modules/integrator.cl>
 
-float3 integrate(struct Ray ray, global struct SVO_NODE *geometry,
+float3 integrate(struct Ray ray, global struct Geometry *geometry,
                  struct PRNG *prng)
 {
     float depth;

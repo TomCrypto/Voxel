@@ -4,7 +4,7 @@
   *
   * @brief Kernel Geometry Unit
   *
-  * This unit providies traversal and occlusion facilities to the integrator in
+  * This unit provides traversal and occlusion facilities to the integrator, in
   * order to help evaluate the light transport integral. Its only input is a 1D
   * array of sparse voxel octree nodes, provided by the host.
 **/
@@ -13,20 +13,17 @@
 
 #include <core/math_lib.cl>
 
-struct SVO_NODE
-{
-    uint child[8];
-};
+struct Geometry;
 
 float3 get_light(void);
 
-bool traverse(global struct SVO_NODE *geometry,
+bool traverse(global struct Geometry *geometry,
               const struct Ray ray, float range,
               float *nearest);
 
-bool occlude(global struct SVO_NODE *geometry,
+bool occlude(global struct Geometry *geometry,
              const struct Ray ray, float range);
 
-bool occludes(__global struct SVO_NODE *geometry, const struct Ray ray, float range);
+bool occludes(__global struct Geometry *geometry, const struct Ray ray, float range);
 
-bool depth_test(__global struct SVO_NODE *geometry, const struct Ray ray, float range, float *depth);
+bool depth_test(__global struct Geometry *geometry, const struct Ray ray, float range, float *depth);

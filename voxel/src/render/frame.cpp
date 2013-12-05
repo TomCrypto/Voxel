@@ -29,9 +29,9 @@ void Frame::notify_cb(std::map<std::string, cl::Kernel> &kernels)
     scheduler::set_arg(kernels["render"], "frm_info", frame_info);
 
 
-    scheduler::set_arg(kernels["buf2tex"], "frm_data", frame_buffer);
-    scheduler::set_arg(kernels["buf2tex"], "frm_info", frame_info);
-    scheduler::set_arg(kernels["buf2tex"], "tex_data", image);
+    scheduler::set_arg(kernels["interop_copy"], "frm_data", frame_buffer);
+    scheduler::set_arg(kernels["interop_copy"], "frm_info", frame_info);
+    scheduler::set_arg(kernels["interop_copy"], "tex_data", image);
 }
 
 void Frame::clear(void)

@@ -7,6 +7,7 @@ Engine::Engine(const cl::Program &subsampler,
                const cl::ImageGL &image)
     : frame(image)
 {
+    core.push_back(scheduler::acquire("core/observer"));
     core.push_back(scheduler::acquire("core/geometry"));
     core.push_back(scheduler::acquire("core/frame_io"));
     core.push_back(scheduler::acquire("core/math_lib"));
@@ -45,7 +46,7 @@ void Engine::sample(void)
 
 void Engine::draw(void)
 {
-    scheduler::run(kernels["buf2tex"], cl::NDRange(frame.width() * frame.height()));
+    scheduler::run(kernels["interop_copy"], cl::NDRange(frame.width() * frame.height()));
 }
 
 void Engine::attach(const std::function
