@@ -13,17 +13,22 @@
 
 #include <core/math_lib.cl>
 
+typedef struct Contact
+{
+    float3 normal;
+} Contact;
+
 struct Geometry;
 
 float3 get_light(void);
 
 bool traverse(global struct Geometry *geometry,
               const struct Ray ray, float range,
-              float *nearest);
+              float *nearest, Contact *contact);
 
 bool occlude(global struct Geometry *geometry,
              const struct Ray ray, float range);
 
 bool occludes(__global struct Geometry *geometry, const struct Ray ray, float range);
 
-bool depth_test(__global struct Geometry *geometry, const struct Ray ray, float range, float *depth);
+bool depth_test(__global struct Geometry *geometry, const struct Ray ray, float range, float *depth, Contact *contact);

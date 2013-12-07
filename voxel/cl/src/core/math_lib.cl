@@ -51,3 +51,23 @@ bool intersect_f(const struct Ray ray, const struct Box box,
     return intersect(ray, box, native_recip(ray.d), t);
 }
 
+float3 get_normal(const struct Ray ray, const struct Box box,
+                  const float3 inv_dir)
+{
+    float3 a = (box.l - ray.o) * inv_dir;
+    float3 b = (box.h - ray.o) * inv_dir;
+    float3 u = min(a, b), v = max(a, b);
+    float  n = max(max(u.x, u.y), u.z);
+
+    //float3 normal = (float3)(u.x == n, u.y == n, u.z == n);
+    if (u.x == n) return (float3)(-sign(ray.d.x), 0, 0);
+    if (u.y == n) return (float3)(0, -sign(ray.d.y), 0);
+    if (u.z == n) return (float3)(0, 0, -sign(ray.d.z));
+
+    //return normal * sign(dot(-ray.d, normal));
+}
+
+float3 get_normal_f(const struct Ray ray, const struct Box box)
+{
+    return get_normal(ray, box, native_recip(ray.d));
+}

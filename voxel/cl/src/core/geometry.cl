@@ -24,7 +24,7 @@ float3 get_light(void)
 
 bool traverse(global struct Geometry *geometry,
               const struct Ray ray, float range,
-              float *nearest)
+              float *nearest, Contact *contact)
 {
     STACK_ITEM stack[20];
     size_t sp = 0;
@@ -38,6 +38,8 @@ bool traverse(global struct Geometry *geometry,
 
     *nearest = range;
 
+    STACK_ITEM ns;
+
     while (sp)
     {
         STACK_ITEM s = stack[--sp];
@@ -48,6 +50,7 @@ bool traverse(global struct Geometry *geometry,
             {
                 s.offset ^= 0x80000000; /* Decode this leaf offset. */
                 *nearest = s.hit;
+                ns = s;
             }
             else
             {
@@ -66,6 +69,11 @@ bool traverse(global struct Geometry *geometry,
                 }
             }
         }
+    }
+
+    if (contact)
+    {
+        contact->normal = get_normal(ray, ns.cube, invdir);
     }
 
     return *nearest < range;
@@ -121,7 +129,7 @@ bool occludes(__global struct Geometry *geometry, const struct Ray ray, float ra
     return occlude(geometry, ray, range);
 }
 
-bool depth_test(__global struct Geometry *geometry, const struct Ray ray, float range, float *depth)
+bool depth_test(__global struct Geometry *geometry, const struct Ray ray, float range, float *depth, Contact *contact)
 {
-    return traverse(geometry, ray, range, depth);
+    return traverse(geometry, ray, range, depth, contact);
 }

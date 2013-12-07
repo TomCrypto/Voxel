@@ -25,6 +25,11 @@ namespace integrators
         return scheduler::acquire("modules/integrators/depth");
     }
 
+    inline cl::Program normal(void)
+    {
+        return scheduler::acquire("modules/integrators/normal");
+    }
+
     inline cl::Program ambient_occlusion(void)
     {
         return scheduler::acquire("modules/integrators/ao");
@@ -39,6 +44,7 @@ namespace integrators
     enum modules
     {
         DEPTH,
+        NORMAL,
         AO,
 
         COUNT_
@@ -55,6 +61,7 @@ namespace integrators
         switch (integrator)
         {
                case       DEPTH: return depth();
+               case      NORMAL: return normal();
                case          AO: return ambient_occlusion();
             default            : throw std::logic_error("Unknown integrator");
         }

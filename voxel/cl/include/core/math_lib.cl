@@ -80,3 +80,7 @@ bool intersect(const struct Ray ray, const struct Box box,
 bool intersect_f(const struct Ray ray, const struct Box box,
                  float *t);
 
+float3 get_normal(const struct Ray ray, const struct Box box,
+                  const float3 inv_dir);
+
+float3 get_normal_f(const struct Ray ray, const struct Box box);

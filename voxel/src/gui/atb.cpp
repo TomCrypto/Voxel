@@ -141,6 +141,7 @@ static void define_types(void)
     integrators_t = TwDefineEnum("Integrator", (const TwEnumVal[])
     {
         {integrators::modules::DEPTH,       "Depth"},
+        {integrators::modules::NORMAL,      "Normal Map"},
         {integrators::modules::AO,          "Ambient Occlusion"},
     },   integrators::modules::COUNT_);
 }

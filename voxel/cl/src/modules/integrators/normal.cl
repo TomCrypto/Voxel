@@ -6,10 +6,11 @@ float3 integrate(struct Ray ray, global struct Geometry *geometry,
                  struct PRNG *prng)
 {
     float depth;
+    Contact contact;
 
-    if (depth_test(geometry, ray, INFINITY, &depth, 0))
+    if (depth_test(geometry, ray, INFINITY, &depth, &contact))
     {
-        return (float3)(0.25, 0.75, 0.25) * (0.5f - depth / 3);
+        return contact.normal * 0.5f + 0.5f;
     }
     else
     {
