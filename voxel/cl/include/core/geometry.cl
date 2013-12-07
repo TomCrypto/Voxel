@@ -18,10 +18,10 @@
   * Describes some additional intersection information, such as the material of
   * the intersected geometry, its surface normal, and so on.
 **/
-typedef struct Hit_Info
+struct Hit_Info
 {
     struct Basis basis;
-} Hit_Info;
+};
 
 /** @struct Geometry
   *
@@ -61,4 +61,4 @@ bool occludes(global struct Geometry *geometry, const struct Ray ray,
   *          improve performance in some cases).
 **/
 bool intersects(global struct Geometry *geometry, const struct Ray ray,
-                float range, float *nearest, Hit_Info *hit_info);
+                float range, float *nearest, struct Hit_Info *hit_info);

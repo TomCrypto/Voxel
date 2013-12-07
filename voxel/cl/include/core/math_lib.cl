@@ -13,6 +13,14 @@
 
 #include <core/prng_lib.cl>
 
+/** Represents the color white.
+**/
+#define C_WHITE (float3)(1, 1, 1)
+
+/** Represents the color black.
+**/
+#define C_BLACK (float3)(0, 0, 0)
+
 /** Performs a linear interpolation on two vectors.
   *
   * @param a  The first vector.

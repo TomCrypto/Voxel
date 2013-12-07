@@ -19,7 +19,7 @@ typedef struct STACK_ITEM
 
 bool traverse(global struct Geometry *geometry,
               const struct Ray ray, float range,
-              float *nearest, Hit_Info *hit_info)
+              float *nearest, struct Hit_Info *hit_info)
 {
     STACK_ITEM stack[20];
     size_t sp = 0;
@@ -126,7 +126,7 @@ bool occludes(global struct Geometry *geometry, const struct Ray ray,
 }
 
 bool intersects(global struct Geometry *geometry, const struct Ray ray,
-                float range, float *nearest, Hit_Info *hit_info)
+                float range, float *nearest, struct Hit_Info *hit_info)
 {
     return traverse(geometry, ray, range, nearest, hit_info);
 }

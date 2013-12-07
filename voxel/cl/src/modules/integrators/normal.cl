@@ -6,14 +6,12 @@ float3 integrate(struct Ray ray, global struct Geometry *geometry,
                  struct PRNG *prng)
 {
     float depth;
-    Hit_Info info;
+    struct Hit_Info hit;
 
-    if (intersects(geometry, ray, INFINITY, &depth, &info))
+    if (intersects(geometry, ray, INFINITY, &depth, &hit))
     {
-        return (info.basis.n * 0.5f + 0.5f) * (0.5f - depth / 3);
+        return (hit.basis.n * 0.5f + 0.5f) * (0.5f - depth / 3);
     }
-    else
-    {
-        return (float3)(0, 0, 0);
-    }
+
+    return C_BLACK;
 }

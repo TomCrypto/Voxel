@@ -11,8 +11,6 @@ float3 integrate(struct Ray ray, global struct Geometry *geometry,
     {
         return (float3)(0.25, 0.75, 0.25) * (0.5f - depth / 3);
     }
-    else
-    {
-        return (float3)(0, 0, 0);
-    }
+
+    return C_BLACK;
 }
