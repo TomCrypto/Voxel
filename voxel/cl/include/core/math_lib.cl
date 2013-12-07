@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include <core/prng_lib.cl>
+
 /** Performs a linear interpolation on two vectors.
   *
   * @param a  The first vector.
@@ -56,13 +58,12 @@ struct Box
 **/
 struct Box subdivide(const struct Box box, size_t index);
 
-/** This function is the same as \c intersect(), except that it allows the user
-  * to pass the (presumably precomputed) inverse direction of the ray, that is,
-  * the ray's direction, with all components inverted.
+/** This function is the same as \c intersect_f(), except it allows the user to
+  * pass the (presumably precomputed) inverse direction of the ray (for speed).
   *
   * @remarks This function ignores \c ray.d.
   *
-  * @see \c intersect()
+  * @see \c #intersect_f()
 **/
 bool intersect(const struct Ray ray, const struct Box box,
                const float3 inv_dir, float *t);
@@ -80,7 +81,54 @@ bool intersect(const struct Ray ray, const struct Box box,
 bool intersect_f(const struct Ray ray, const struct Box box,
                  float *t);
 
-float3 get_normal(const struct Ray ray, const struct Box box,
+/** @struct Basis
+  *
+  * A basis, represented as a 3x3 TBN matrix (the surface normal is \c n).
+**/
+struct Basis
+{
+    float3 t;
+    float3 n;
+    float3 b;
+};
+
+/** This function is the same as \c box_basis_f(), except it allows the user to
+  * pass the (presumably precomputed) inverse direction of the ray (for speed).
+  *
+  * @see #box_basis_f()
+**/
+struct Basis box_basis(const struct Ray ray, const struct Box box,
                   const float3 inv_dir);
 
-float3 get_normal_f(const struct Ray ray, const struct Box box);
+/** Returns the surface basis of a box, at the intersection point made by a ray
+  * with said box (this will thus only return a axis-aligned basis).
+  *
+  * @param ray  The ray.
+  * @param box  The box.
+  *
+  * @return The axis-aligned basis.
+  *
+  * @remarks The basis is defined only if the ray actually intersects the box.
+**/
+struct Basis box_basis_f(const struct Ray ray, const struct Box box);
+
+/** Transforms a vector by a 3x3 linear transformation matrix.
+  *
+  * @param v      The vector to transform.
+  * @param basis  The basis to transform the vector by.
+  *
+  * @return The transformed vector.
+**/
+float3 transform(float3 v, struct Basis basis);
+
+/** Produces an exitant vector, in normal space, according to a cosine-weighted
+  * distribution (following Lambert's cosine law).
+  *
+  * @return A cosine-weighted vector.
+  *
+  * @remarks The returned vector will probably have to be transformed according
+  *          to some basis, e.g. the surface normal it is emitted relative to.
+  *
+  * @param prng  A pseudorandom number generator instance.
+**/
+float3 cosine(struct PRNG *prng);

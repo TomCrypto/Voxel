@@ -2,6 +2,8 @@
 
 #include <core/math_lib.cl>
 
+#define EPSILON 1e-4f
+
 float3 lerp(float3 a, float3 b, float t)
 {
     return a + (b - a) * t;
@@ -42,7 +44,7 @@ bool intersect(const struct Ray ray, const struct Box box,
     *t      = max(max(u.x, u.y), u.z);
     float f = min(min(v.x, v.y), v.z);
 
-    return *t < f && f > 0;
+    return *t < f && f > EPSILON;
 }
 
 bool intersect_f(const struct Ray ray, const struct Box box,
@@ -51,23 +53,56 @@ bool intersect_f(const struct Ray ray, const struct Box box,
     return intersect(ray, box, native_recip(ray.d), t);
 }
 
-float3 get_normal(const struct Ray ray, const struct Box box,
-                  const float3 inv_dir)
+struct Basis box_basis(const struct Ray ray, const struct Box box,
+                       const float3 inv_dir)
 {
     float3 a = (box.l - ray.o) * inv_dir;
     float3 b = (box.h - ray.o) * inv_dir;
-    float3 u = min(a, b), v = max(a, b);
-    float  n = max(max(u.x, u.y), u.z);
+    float3 u = min(a, b); // nearest only
+    float  t = max(max(u.x, u.y), u.z);
 
-    //float3 normal = (float3)(u.x == n, u.y == n, u.z == n);
-    if (u.x == n) return (float3)(-sign(ray.d.x), 0, 0);
-    if (u.y == n) return (float3)(0, -sign(ray.d.y), 0);
-    if (u.z == n) return (float3)(0, 0, -sign(ray.d.z));
+    if (u.x == t)
+    {
+        int s = -sign(inv_dir.x);
+        return (struct Basis){(float3)(0, 0, s),
+                              (float3)(s, 0, 0),
+                              (float3)(0, s, 0)};
+    }
 
-    //return normal * sign(dot(-ray.d, normal));
+    if (u.y == t)
+    {
+        int s = -sign(inv_dir.y);
+        return (struct Basis){(float3)(s, 0, 0),
+                              (float3)(0, s, 0),
+                              (float3)(0, 0, s)};
+    }
+
+    /* else... */
+    {
+        int s = -sign(inv_dir.z);
+        return (struct Basis){(float3)(s, 0, 0),
+                              (float3)(0, 0, s),
+                              (float3)(0, s, 0)};
+    }
 }
 
-float3 get_normal_f(const struct Ray ray, const struct Box box)
+struct Basis box_basis_f(const struct Ray ray, const struct Box box)
 {
-    return get_normal(ray, box, native_recip(ray.d));
+    return box_basis(ray, box, native_recip(ray.d));
+}
+
+float3 transform(float3 v, struct Basis basis)
+{
+    return v.x * basis.t + v.y * basis.n + v.z * basis.b;
+}
+
+float3 cosine(struct PRNG *prng)
+{
+    float2 u = rand2(prng);
+    float t = 2*M_PI * u.x;
+    float r = sqrt(u.y);
+
+    return (float3)(r * native_cos(t),
+                    sqrt(1 - u.y),
+                    r * native_sin(t));
 }

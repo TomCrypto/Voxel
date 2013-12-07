@@ -17,14 +17,9 @@ typedef struct STACK_ITEM
     struct Box cube;
 } STACK_ITEM;
 
-float3 get_light(void)
-{
-    return (float3)(0.2f, -0.35f, 0.3f);
-}
-
 bool traverse(global struct Geometry *geometry,
               const struct Ray ray, float range,
-              float *nearest, Contact *contact)
+              float *nearest, Hit_Info *hit_info)
 {
     STACK_ITEM stack[20];
     size_t sp = 0;
@@ -71,9 +66,9 @@ bool traverse(global struct Geometry *geometry,
         }
     }
 
-    if (contact)
+    if (hit_info)
     {
-        contact->normal = get_normal(ray, ns.cube, invdir);
+        hit_info->basis = box_basis(ray, ns.cube, invdir);
     }
 
     return *nearest < range;
@@ -124,12 +119,14 @@ bool occlude(global struct Geometry *geometry,
     return false;
 }
 
-bool occludes(__global struct Geometry *geometry, const struct Ray ray, float range)
+bool occludes(global struct Geometry *geometry, const struct Ray ray,
+              float range)
 {
     return occlude(geometry, ray, range);
 }
 
-bool depth_test(__global struct Geometry *geometry, const struct Ray ray, float range, float *depth, Contact *contact)
+bool intersects(global struct Geometry *geometry, const struct Ray ray,
+                float range, float *nearest, Hit_Info *hit_info)
 {
-    return traverse(geometry, ray, range, depth, contact);
+    return traverse(geometry, ray, range, nearest, hit_info);
 }

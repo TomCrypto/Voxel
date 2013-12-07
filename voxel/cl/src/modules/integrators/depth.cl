@@ -7,7 +7,7 @@ float3 integrate(struct Ray ray, global struct Geometry *geometry,
 {
     float depth;
 
-    if (depth_test(geometry, ray, INFINITY, &depth, 0))
+    if (intersects(geometry, ray, INFINITY, &depth, 0))
     {
         return (float3)(0.25, 0.75, 0.25) * (0.5f - depth / 3);
     }
